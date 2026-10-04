@@ -41,6 +41,7 @@
 
 <!-- Three or four sentences: what a user asks for, and what they get back. -->
 
+A user types a plain-language request such as "vintage graphic tee under $30, size M". FitFindr searches a set of secondhand listings for the best match within the price and size limits, then suggests one or two outfits that combine the find with pieces from the user's wardrobe (or general styling advice if the wardrobe is empty). Finally it writes a short caption the user could post about the find. If nothing matches, it stops early and tells the user which limit to loosen instead of making up an outfit.
 
 
 ---
@@ -163,25 +164,39 @@
 **One full query**
 
 ```
-$ python app.py ask '...'
+$ python app.py ask 'vintage graphic tee under $30'
+  Found:    Y2K Baby Tee — Butterfly Print — $18.0 on depop
 
+  Outfit:   **Outfit 1: Casual Y2K Streetwear**
+Pair the Y2K Baby Tee with your baggy straight-leg jeans for a classic early 2000s silhouette. Layer the black cropped zip hoodie over top for easy warmth, and finish the look with chunky white sneakers and the black crossbody bag. 
+
+**Outfit 2: Effortless Retro Contrast**
+Tuck the Y2K Baby Tee into your wide-leg khaki trousers, secured with the brown leather belt to define the waist. Throw on the vintage black denim jacket as outerwear and complete the outfit with chunky white sneakers for a cool, balanced mix of edgy and neutral tones.
+
+  Fit card: scored this butterfly baby tee for just $18.00 on depop and i am officially living my 2000s pop star dream. the fit is *so* tiny and cute—totally leaning into that nostalgic, effortless streetwear vibe for class tomorrow.
+
+0 model calls this session, 2 served from cache
 ```
 
 **The three tools, tested one at a time**
 
 ```
 $ python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
-
+[{'id': 'lst_002', 'title': 'Y2K Baby Tee — Butterfly Print', 'description': 'Super cute early 2000s baby tee with butterfly graphic. Fitted crop length. Tag says medium but fits like a small.', 'category': 'tops', 'style_tags': ['y2k', 'vintage', 'graphic tee', 'cottagecore'], 'size': 'S/M', 'condition': 'excellent', 'price': 18.0, 'colors': ['white', 'pink', 'purple'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_006', 'title': 'Graphic Tee — 2003 Tour Bootleg Style', 'description': 'Vintage-style bootleg tee with faded graphic. Slightly boxy fit. 100% cotton, soft and worn-in.', 'category': 'tops', 'style_tags': ['graphic tee', 'vintage', 'grunge', 'streetwear', 'band tee'], 'size': 'L', 'condition': 'good', 'price': 24.0, 'colors': ['black'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_017', 'title': 'Mesh Long-Sleeve Top — Black', 'description': 'Sheer black mesh long-sleeve. Great for layering under a graphic tee or over a bralette. Stretchy material, fits true to size.', 'category': 'tops', 'style_tags': ['y2k', 'grunge', 'goth', 'layering'], 'size': 'S/M', 'condition': 'excellent', 'price': 15.0, 'colors': ['black'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_033', 'title': 'Vintage Band Tee — Faded Grey', 'description': 'Faded grey band-style tee with distressed graphic. Crew neck. Fits boxy. Well-loved but no holes or major damage.', 'category': 'tops', 'style_tags': ['vintage', 'grunge', 'band tee', 'graphic tee', 'streetwear'], 'size': 'L', 'condition': 'fair', 'price': 19.0, 'colors': ['grey', 'charcoal'], 'brand': None, 'platform': 'depop'}, {'id': 'lst_012', 'title': 'Oversized Crewneck Sweatshirt — Vintage Navy', 'description': 'Perfectly faded navy crewneck. Genuinely vintage — not manufactured distressed. Ribbed cuffs and hem. No graphics, clean.', 'category': 'tops', 'style_tags': ['vintage', 'basics', 'oversized', 'classic'], 'size': 'XL (fits oversized)', 'condition': 'good', 'price': 20.0, 'colors': ['navy'], 'brand': None, 'platform': 'thredUp'}, {'id': 'lst_015', 'title': 'Vintage Graphic Hoodie — Faded Black', 'description': 'Faded black pullover hoodie with barely-visible vintage graphic on the chest. Cozy interior. Some pilling but adds to the worn-in look.', 'category': 'tops', 'style_tags': ['vintage', 'grunge', 'graphic', 'streetwear'], 'size': 'L', 'condition': 'fair', 'price': 26.0, 'colors': ['black', 'charcoal'], 'brand': None, 'platform': 'depop'}]
 ```
 
 ```
-$ python -c "from tools import suggest_outfit; ..."
+$ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
+**Outfit 1: Casual & Cool**
+Pair the vintage Levi's 501 jeans with the **White ribbed tank top** tucked in, layered under the **Oversized grey crewneck sweatshirt**. Accessorize with the **Brown leather belt** and **Black crossbody bag**, and finish the look with the **Chunky white sneakers**. 
 
+**Outfit 2: Edgy Streetwear**
+Combine the vintage Levi's 501 jeans and the **Brown leather belt** with the **Black cropped zip hoodie**. Throw on the **Vintage black denim jacket** as outerwear, slip into the **Black combat boots**, and complete the outfit using the **Black crossbody bag**.
 ```
 
 ```
-$ python -c "from tools import create_fit_card; ..."
-
+$ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
+scored these vintage Levi's 501 jeans on depop for just $38.00 and I'm obsessed with the knee fading. honestly the ultimate relaxed 90s vibe, especially paired with crisp white sneakers.
 ```
 
 ---
@@ -197,15 +212,15 @@ $ python -c "from tools import create_fit_card; ..."
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I gave Claude my README spec and my draft criteria.md and asked it to review the criteria I'd written so far.
+- *What came back:* It pointed out that criterion 3 ("something about state") was wrong in two ways. It said I'd pass the whole list from `search_listings` to `suggest_outfit`, which contradicts my own branch rule (take the first result), and "returns a non-empty string" is a tool contract, not state.
+- *What I changed:* I rewrote criterion 3 so it compares ids: `session["selected_item"]["id"]` must equal `search_results[0]["id"]` and the id of the item that actually reached `suggest_outfit` and `create_fit_card`, 5 of 5 tries. I also had it help me draft criteria 4 (price and platform in the card, 2-4 sentences) and 5 (price and size filters), and wrote my size matching rule into the Tool Inventory so criterion 5 has something to check against.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked Claude to implement the three tools in tools.py, using `load_listings()` and `generate()`, following my Tool Inventory (including the whole-token size rule).
+- *What came back:* Its first edit was applied through a shell script and the prompt strings in `suggest_outfit` were broken by newline escaping, so `import tools` failed with `SyntaxError: unterminated f-string literal`.
+- *What I changed:* I had it `git checkout tools.py` and re-apply the same edit from a script file. Then I tested instead of trusting it: `search_listings(size='S')` returned only S, S/M sizes (no "US 9"), `size='L'` returned L and L/XL (no "XL"), an impossible query returned `[]`, and with `AI201_CACHE=0` three runs of `create_fit_card` on the same item gave three different captions, so temperature 0.9 is working.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 

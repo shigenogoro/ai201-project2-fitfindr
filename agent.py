@@ -106,10 +106,51 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         than a stack trace. The import is already at the top of this file.
     """
     session = new_session(query, wardrobe)
+    session["parsed"] = _parse_query(query)
 
-    # TODO: delete these two lines and build the loop.
-    session["error"] = "The planning loop isn't built yet — see the TODO in agent.py."
+    session["search_results"] = search_listings(**session["parsed"])
+    if not session["search_results"]:  # the branch: nothing found -> stop, no model calls
+        p = session["parsed"]
+        tried = [f"keywords '{p['description']}'"]
+        if p["size"]:
+            tried.append(f"size {p['size']}")
+        if p["max_price"] is not None:
+            tried.append(f"under ${p['max_price']:g}")
+        session["error"] = (
+            f"No listings matched {', '.join(tried)}. Try raising the price "
+            "limit, dropping the size, or using broader keywords."
+        )
+        return session
+
+    session["selected_item"] = session["search_results"][0]
+    try:
+        session["outfit_suggestion"] = suggest_outfit(session["selected_item"], session["wardrobe"])
+        session["fit_card"] = create_fit_card(session["outfit_suggestion"], session["selected_item"])
+    except ModelUnavailable as exc:
+        session["error"] = str(exc)
     return session
+
+
+def _parse_query(query: str) -> dict:
+    """String splitting: '$30' / 'under 30' -> max_price, 'size M' -> size, the rest -> keywords."""
+    words = query.replace(",", " ").split()
+    size, max_price, keep, i = None, None, [], 0
+    while i < len(words):
+        w = words[i]
+        nxt = words[i + 1] if i + 1 < len(words) else ""
+        if w.lower() == "size" and nxt:
+            size, i = nxt.strip(".").upper(), i + 2
+            continue
+        price = w.lstrip("$").rstrip(".")
+        if w.lower() == "under" and nxt.lstrip("$").replace(".", "", 1).isdigit():
+            max_price, i = float(nxt.lstrip("$").rstrip(".")), i + 2
+            continue
+        if w.startswith("$") and price.replace(".", "", 1).isdigit():
+            max_price, i = float(price), i + 1
+            continue
+        keep.append(w)
+        i += 1
+    return {"description": " ".join(keep), "size": size, "max_price": max_price}
 
 
 # ── running it directly ───────────────────────────────────────────────────────
