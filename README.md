@@ -132,11 +132,23 @@
 
 **Branch rule:**
 
+     If `search_listings` returns an empty list, put a message in the session and stop. Otherwise take the first result and go to `suggest_outfit`.
+
 **Where it lives:** `agent.py::run_agent`
 
 **How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
 
+     The query is parsed by string splitting. To be more specific, A user inputs keywords describing what he/she wants, so we can simply use string spliting to extract keywords from the user input.
+
 **What moves through the session:** <!-- which fields, in what order -->
+
+     1. User input keywords describe what he/she wants.
+
+     2. Agent invoke `search_listings()` tool to search a list of matching items.
+
+     3. If the return listing is empty, the session should stop here. Otherwise, agent will pick the first item and pass it to `suggest_outfit()` to generate a suggestion for the user.
+
+     4. After the suggestion is generated, the agent will invoke `create_fit_card()` to generate a short caption that user can post about the find.
 
 ---
 
