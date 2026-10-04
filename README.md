@@ -59,24 +59,61 @@
 
 ### `search_listings`
 
-- **What it does:**
+- **What it does:** 
+     
+     It search the listings data for items matching a description, and optionally a size and a price ceiling.
+
 - **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
+
+     1. `description` (string): Keywords describing what the user wants
+     2. `size` (string | None): A size string to filter by, or Noneto skip size filtering. It can be matched case-insensitively.
+     3. `max_price` (float | None): Maximum price inclusively, or None to skip price filtering.
+
 - **Returns:**
+     
+     The function will return a list of matching listing dicts with best match comes first. 
+
 - **When it has nothing:**
+     
+     An *empty list* will be returned when nothing matches. It should not return *None* or an *exception* when nothing matches.
 
 ### `suggest_outfit`
 
 - **What it does:**
+
+     Given an item and the user's wardrobe, the function will suggest one or two outfits.
+
 - **Inputs:**
+
+     1. `new_item` (dict): the item that the user is considering, which is represented as a listing dict.
+     2. `wardrobe` (dict): a wardrobe dict with an 'items' key holding a listof items. It **may be empty**, and we need to handle it. 
+
 - **Returns:**
+
+     If the given wardrobe is non-empty, we should return a **non-empty string** with outfit suggestions. 
+
 - **When it has nothing:**
+
+     If the wardrobe is empty, we should return a general styling advice rather than raising an exception or returning an empty string "".
 
 ### `create_fit_card`
 
 - **What it does:**
+
+     The function write a short caption someone would actually post about the find.
+
 - **Inputs:**
+
+     1. `outfit` (string): the outfit suggestion from `suggest_outfit()`
+     2. `new_item` (dict): the listing dict for the item.
+
 - **Returns:**
+
+     The funciton returns a two-to-four sentence caption.
+
 - **When it has nothing:**
+
+     If `outfit` is empty or whitespace, the function should still return a descriptive message rather than raising an exception.
 
 ---
 
