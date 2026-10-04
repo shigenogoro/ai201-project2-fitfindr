@@ -66,12 +66,13 @@
 - **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
 
      1. `description` (string): Keywords describing what the user wants
-     2. `size` (string | None): A size string to filter by, or Noneto skip size filtering. It can be matched case-insensitively.
+     2. `size` (string | None): A size string to filter by, or None to skip size filtering. 
+          **Size match rule:** matching is case-insensitive and by whole token, not substring. The listing's size is split on `/` and whitespace into tokens, and the requested size must equal one token exactly. So `"M"` matches `"S/M"`, `"S"` does not match `"US 9"`, and `"L"` does not match `"XL"`.
      3. `max_price` (float | None): Maximum price inclusively, or None to skip price filtering.
 
 - **Returns:**
      
-     The function will return a list of matching listing dicts with best match comes first. 
+     A list of full listing dicts (id, title, description, category, style_tags, size, condition, price, colors, brand, platform), best keyword-overlap score first, at most `config.SEARCH_RESULT_LIMIT` of them. Every result satisfies the price ceiling and the size rule above.
 
 - **When it has nothing:**
      

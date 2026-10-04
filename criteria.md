@@ -29,6 +29,8 @@ tool calls and returns a fit card — in at least 4 of 5 tries.
      "my search is a plain keyword match and some phrasings will miss" is a
      real answer. -->
 
+My search strategy is plain keyword matching, and the query is parsed by string splitting, and some phrasings will miss.
+
 ---
 
 ## 2. An impossible query stops before the second tool
@@ -40,63 +42,54 @@ Given a query that matches no listings, the agent stops before calling
 <!-- Why is 5 of 5 reasonable here when criterion 1 isn't? What's different
      about this path? -->
 
+Since I've already stated clearly that if there is no matching item, in other words, the `search_listings` returns an empty list, the agent should put a message in the session and stop. Therefore, it should never invoke `suggest_outfit` in this case.
+
+Unlike criterion 1, this path is deterministic: it is a plain `if not results` check on the output of `search_listings`, which doesn't call the model. Nothing about phrasing or model output can change the branch, so there is no reason to allow a miss. The message is also checkable: it must name the filter(s) the user can change (the price ceiling, the size, or the keywords).
+
 ---
 
-## 3. Something about state
+## 3. The selected item is the same item all the way through
 
-<!-- YOU WRITE THIS ONE.
-
-     How would you know that the item your search found is the same item the
-     next tool received? Name something countable or observable.
-
-     This is the criterion people find hardest, because state failure doesn't
-     look like state failure — it looks like a tool problem. Something that
-     compares session["selected_item"] against what actually reached
-     suggest_outfit is the shape you're after. -->
-
-
+Given a query that matches at least one listing, `session["selected_item"]["id"]`
+equals `search_results[0]["id"]`, and also equals the `id` of the item that
+actually reached `suggest_outfit` and `create_fit_card` — 5 of 5 tries.
 
 **Why this target:**
 
-
+Passing the selected item along is plain variable passing with no model in the
+way, so there is no excuse for a miss. If this fails, it is a loop or session
+bug (the loop re-fetched a different listing, or the item was mutated along the
+way), not a tool problem, and 5 of 5 is what exposes it.
 
 ---
 
 ## 4. Something about the fit card
 
-<!-- YOU WRITE THIS ONE.
-
-     The fit card calls a model, so the same input can produce different words
-     each time. That's not a bug — it's the nature of the tool. So what would
-     make it acceptable?
-
-     Think about what you'd actually be unhappy to see. A caption that never
-     mentions the price? Two different items producing the same opening
-     sentence? A card longer than a caption anyone would post? Any of those can
-     be turned into a number. -->
-
-
+Across 5 tries, each fit card (a) contains the item's price and platform name,
+in 5 of 5 tries, and (b) is 2 to 4 sentences long, in at least 4 of 5 tries.
 
 **Why this target:**
 
-
+The price and platform come straight from the listing and the prompt asks for
+them explicitly, so a missing one means the prompt or the tool is wrong, and I
+can check it with a string match. Sentence count depends on the model's wording,
+which varies run to run (and the caption is never word-for-word the same), so I
+allow one miss in five.
 
 ---
 
 ## 5. Your choice
-
-<!-- YOU WRITE THIS ONE TOO.
-
-     Pick something you actually care about getting right. Speed, the empty
-     wardrobe path, what happens when the model can't be reached, whether the
-     search respects a price ceiling — anything, as long as it names a number
-     or an observable outcome. -->
-
-
+Given 5 queries that each include a `max_price` and a `size`, every result
+`search_listings` returns has `price <= max_price` and a size that matches under
+my size rule (so "S" never returns "US 9", and "L" never returns "XL") — 5 of 5
+queries, with zero violating results.
 
 **Why this target:**
 
-
+Search is the one tool that doesn't call the model, so it is fully deterministic
+and there is no reason to allow a miss. The size field mixes clothing sizes and
+shoe sizes, and a plain substring test would let wrong items through, which
+reads to the user like a broken search.
 
 ---
 
