@@ -304,19 +304,50 @@ that produced it:
 **Happy path**
 
 ```
-
+$ python app.py ask 'vintage graphic tee under $30' --trace
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: Y2K Baby Tee — Butterfly Print ($18.0, depop)
+[4] suggest_outfit
+      in:  Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Casual Y2K Streetwear** Pair the Y2K Baby Tee with your baggy straight-leg jeans for a classic ear…
+[5] create_fit_card
+      in:  Y2K Baby Tee — Butterfly Print
+      out: scored this butterfly baby tee for just $18.00 on depop and i am officially living my 2000s pop star dream. th…
 ```
 
 **Empty search**
 
 ```
-
+$ python app.py ask 'designer ballgown size XXS under $5' --trace
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
 ```
 
 **On the MCP move:** <!-- what changed in your code, and whether anything
 behaved differently afterwards. If the rewire didn't work, say exactly where it
 broke — the error text and the last thing that worked. That earns the point in
 full. -->
+
+I registered `search_listings` in `mcp_server.py` and changed one line in `agent.py::run_agent` from `search_listings(**session["parsed"])` to `call_tool("search_listings", session["parsed"])`. Nothing behaved differently: I compared the MCP result with the direct call for `'graphic tee'` under $30 and the two lists were equal, and an impossible query still came back as `[]`. Both traces above show it as `search_listings (via MCP)`.
+
+**The three failure modes**
+
+- *Empty search* (`'designer ballgown size XXS under $5'`): the agent stopped at step 3 without calling `suggest_outfit`, and said: "No listings matched keywords 'designer ballgown', size XXS, under $5. Try raising the price limit, dropping the size, or using broader keywords." No handler was needed, this branch already worked.
+- *Empty wardrobe* (`python app.py ask 'denim jacket under $50' --empty-wardrobe`): `suggest_outfit` returned general styling advice ("Here are two ways to style your Wrangler jacket: 1. Casual Contrast ... 2. Playful Texture ...") and the fit card was written from it. No crash and no empty string, so no handler was needed.
+- *Model unavailable* (bad `GEMINI_API_KEY` set for one run, on a query I hadn't asked before): the first version printed the model error twice with duplicated advice, because my handler added its own sentence after the adapter's. I changed the handler in `agent.py::run_agent` to catch `ModelUnavailable` and say: "I found an item but can't write the outfit or fit card because the model couldn't be reached. The model rejected your API key. Check GEMINI_API_KEY in your .env file, or create a fresh key at aistudio.google.com." The real service also returned a `503 UNAVAILABLE` (high demand) during testing, and the same handler reported it, so that was an unplanned second test of the same path.
 
 
 
