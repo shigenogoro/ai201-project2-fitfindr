@@ -127,14 +127,14 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         return session
 
     session["selected_item"] = session["search_results"][0]
-    trace.step("select item", inputs=f"{len(session['search_results'])} results", returned=session["selected_item"])
+    trace.step("select item", inputs=f"{len(session['search_results'])} results", returned=f"id {session['selected_item']['id']} {session['selected_item']['title']}")
     try:
         session["outfit_suggestion"] = suggest_outfit(session["selected_item"], session["wardrobe"])
         n_owned = len(session["wardrobe"].get("items") or [])
-        trace.step("suggest_outfit", inputs=f"{session['selected_item']['title']}, wardrobe of {n_owned} items",
+        trace.step("suggest_outfit", inputs=f"id {session['selected_item']['id']} {session['selected_item']['title']}, wardrobe of {n_owned} items",
                    returned=session["outfit_suggestion"], note="" if n_owned else "empty wardrobe -> general advice")
         session["fit_card"] = create_fit_card(session["outfit_suggestion"], session["selected_item"])
-        trace.step("create_fit_card", inputs=session["selected_item"]["title"], returned=session["fit_card"])
+        trace.step("create_fit_card", inputs=f"id {session['selected_item']['id']} {session['selected_item']['title']}", returned=session["fit_card"])
     except ModelUnavailable as exc:
         session["error"] = (
             f"I found an item but can't write the outfit or fit card because the model "

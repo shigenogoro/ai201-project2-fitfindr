@@ -242,17 +242,125 @@ scored these vintage Levi's 501 jeans on depop for just $38.00 and I'm obsessed 
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes all three tools and returns a fit card | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before `suggest_outfit`, message names what to change | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. `selected_item` id equals the id that reached `suggest_outfit` and `create_fit_card` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4a. Fit card contains the item's price and platform | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4b. Fit card is 2 to 4 sentences | 4 of 5 | PASS | PASS | PASS | FAIL | PASS | MET (4/5) |
+| 5. Every search result is within `max_price` and matches `size` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
-**Real output from one try**, pasted as text, naming the file and function
-that produced it:
+Criterion 4 has two clauses with different targets in `criteria.md`, so it gets two rows (4a, 4b). Every row was run through `python run_eval.py --label before` with caching off; the raw output is in `results/run_2026-10-13_2336_before.md`. This run used Haiku through `claude -p`, not Gemini — see "Model availability problem" at the bottom of this file.
+
+How I decided each try: 1 = a fit card came back; 2 = the trace stops at the `branch` step with no `suggest_outfit` step and the message names the filters; 3 = the `id` in the `select item`, `suggest_outfit` and `create_fit_card` steps is the same; 4a = the item's price (`$30` or `$30.00`) and platform name both appear in the card; 4b = I counted sentences by hand; 5 = I re-ran `search_listings` with the parsed arguments and checked every result's `price` and `size` (the results file only records titles). The one 4b miss (try 4) is a single run-on sentence with no full stop: "found this delicate floral silk slip on depop for $30.00 and it's already become my favorite layering piece—…which wasn't even the plan".
+
+**Real output from one try per criterion**, pasted as text, naming the file and function that produced it:
+
+**Criterion 1 — matching query completes (`agent.py::run_agent`, `tools.py::create_fit_card`)**
 
 ```
+$ python app.py ask 'vintage graphic tee under $30' --trace   (try 1)
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: # Outfit Ideas for Your Y2K Baby Tee  **Outfit 1: Classic Y2K** Pair the Y2K Baby Tee with your **Baggy straig…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: just scored this adorable y2k butterfly baby tee on depop for $18.00 and i'm absolutely obsessed 🦋 the butterf…
 
+Fit card: just scored this adorable y2k butterfly baby tee on depop for $18.00 and i'm absolutely obsessed 🦋 the butterfly graphic is straight-up early 2000s perfection and the fitted crop works with literally everything. already planning to wear it with my baggy jeans AND dress it up with trousers because that's the vibe we're going for.
+```
+
+**Criterion 2 — impossible query stops early (`agent.py::run_agent`, the branch)**
+
+```
+$ python app.py ask 'designer ballgown size XXS under $5' --trace   (try 1)
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+
+Session error: No listings matched keywords 'designer ballgown', size XXS, under $5. Try raising the price limit, dropping the size, or using broader keywords.
+```
+
+**Criterion 3 — selected item reaches suggest_outfit (`agent.py::run_agent`; the same `id` appears at steps 3, 4 and 5)**
+
+```
+$ python app.py ask '90s track jacket in size M' --trace   (try 1)
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: # Outfit Ideas for Your Track Jacket  **Outfit 1: Classic 90s Vibe** Layer your **White ribbed tank top** unde…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: just scored this champion 90s track jacket on poshmark for $45 and i'm literally obsessed 😍 the navy/white str…
+
+Fit card: just scored this champion 90s track jacket on poshmark for $45 and i'm literally obsessed 😍 the navy/white stripe detail is everything and the weight is perfect for layering into fall. this piece is going to be on repeat with literally everything in my closet.
+```
+
+**Criterion 4 — fit card has price and platform (`tools.py::create_fit_card`)**
+
+```
+$ python app.py ask 'silk slip dress in midi length under $40' --trace   (try 1)
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1: Casual-Cool 90s Vibe** Layer your **Vintage black denim jacket** over the slip dress, pair with **…
+[5] create_fit_card
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length
+      out: found this 90s floral slip dress on depop for $30 and literally wore it the next day. there's a tiny snag on t…
+
+Fit card: found this 90s floral slip dress on depop for $30 and literally wore it the next day. there's a tiny snag on the side seam that nobody will ever see, but honestly it just adds to the vintage charm at this point. paired it with my black denim jacket and suddenly i'm having a whole grunge moment—this dress is the vibe.
+```
+
+**Criterion 5 — price and size filters hold (`tools.py::search_listings`, called via `mcp_server.py`)**
+
+```
+$ python app.py ask 'tee size L under $25' --trace   (try 1)
+[1] parse query
+      in:  tee size L under $25
+      out: {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+      out: 2 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey
+[3] select item
+      in:  2 results
+      out: id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+[4] suggest_outfit
+      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style, wardrobe of 10 items
+      out: **Outfit 1: Grunge-Vintage** Graphic Tee with **Baggy straight-leg jeans, dark wash**, **Vintage black denim j…
+[5] create_fit_card
+      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+      out: found this 2003 tour bootleg tee on depop for $24.00 and the faded graphic is actually perfect 🖤 soft 100% cot…
+
+Fit card: found this 2003 tour bootleg tee on depop for $24.00 and the faded graphic is actually perfect 🖤 soft 100% cotton, boxy fit, looks like it's been through everything—which is exactly the vibe i'm going for. obsessed
 ```
 
 ---
@@ -424,6 +532,18 @@ I registered `search_listings` in `mcp_server.py` and changed one line in `agent
      Do not delete and recreate this repository. Your commit history is what
      shows your criteria existed before your results did.
      ═════════════════════════════════════════════════════════════════════ -->
+
+---
+
+## Model availability problem (Unit 4, Milestone 3)
+
+I could not get a clean `before` run on the default model, so I want this on record.
+
+- **What happened.** `python run_eval.py --label before` against `gemini-3.5-flash-lite` came back mostly with `503 UNAVAILABLE` ("This model is currently experiencing high demand") and `Server disconnected without sending a response`. I ran it four times and saved all four files in `results/`: 12, 14, 20 and 25 of the model-using tries failed (the first run was `run_2026-10-13_0843_before.md`, the last Gemini one `run_2026-10-13_2141_before.md`: every try that needed the model failed). Switching to a new API key changed nothing.
+- **What I tried.** `gemini-2.5-flash` does not resolve for my key. `gemini-3.5-flash` answered a small prompt, but the full run (`run_2026-10-13_2318_before.md`) hit 502/503 on 10 tries and then `429` ("Still rate limited after 5 attempts") on 12 more, which looks like the daily quota for that key.
+- **What I did.** I added an optional provider to `generate.py` (`AI201_PROVIDER=claude`, with `AI201_MODEL=haiku`), which sends the prompt through the local `claude -p` command instead of the Gemini API. The default is still Gemini and nothing changes unless that variable is set. All 30 tries in `run_2026-10-13_2336_before.md` completed. Anthropic's alias `haiku` resolves to whichever Haiku the CLI currently maps it to (Haiku 4.5 at the time of writing); there is no Haiku 5.5.
+- **What this changes about my results.** My `before` numbers describe the agent running on Haiku, not on the model the course gives out. `claude -p` has no temperature setting, so `config.TEMPERATURE` does not apply to these runs, and token counts are not recorded. My "after" run must use the same provider and model, or it won't be comparable.
+- **What it didn't fix.** The agent itself has no retry for `503`; `generate.py` only retries `429`. A real user on the default model would have seen the "model couldn't be reached" message from the Milestone 2 handler most of the time that evening.
 
 ---
 

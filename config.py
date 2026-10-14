@@ -66,6 +66,12 @@ SEARCH_RESULT_LIMIT = 10
 
 MODEL = os.getenv("AI201_MODEL", "gemini-3.5-flash-lite")
 
+# "gemini" (default) or "claude". "claude" sends each prompt through the local
+# `claude -p` CLI instead of the Gemini API, using your Claude plan; set
+# AI201_MODEL=haiku with it. Added in unit 4 because gemini-3.5-flash-lite was
+# returning 503 on most calls (see the README, last section).
+PROVIDER = os.getenv("AI201_PROVIDER", "gemini")
+
 
 # ─── Rate limiting and quota guards ──────────────────────────────────────────
 # You should not need to touch these.

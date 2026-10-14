@@ -31,6 +31,8 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import time
 
@@ -257,6 +259,28 @@ def _get_client():
     return _client
 
 
+def _generate_claude(prompt: str, system: str | None) -> str:
+    """The same call through the local `claude -p` CLI (AI201_PROVIDER=claude)."""
+    global _session_calls
+    exe = shutil.which("claude")
+    if not exe:
+        raise ModelUnavailable("AI201_PROVIDER=claude but the `claude` CLI isn't on your PATH.")
+    _session_calls += 1
+    try:
+        done = subprocess.run(
+            [exe, "-p", "--model", config.MODEL, "--tools", "", "--setting-sources", "",
+             "--disable-slash-commands", "--no-session-persistence",
+             "--system-prompt", system or "Follow the user's instructions exactly."],
+            input=prompt, capture_output=True, text=True, encoding="utf-8",
+            timeout=180, cwd=config.CACHE_DIR.parent.anchor or None,
+        )
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        raise ModelUnavailable(f"Couldn't reach the model: {exc}") from exc
+    if done.returncode != 0 or not done.stdout.strip():
+        raise ModelUnavailable(f"Couldn't reach the model: {(done.stderr or 'empty reply').strip()[:200]}")
+    return done.stdout.strip()
+
+
 def generate(
     prompt: str,
     system: str | None = None,
@@ -294,6 +318,12 @@ def generate(
             return hit
 
     _check_budget()
+
+    if config.PROVIDER == "claude":
+        text = _generate_claude(prompt, system)
+        if use_cache:
+            _cache_write(key, text)
+        return text
 
     last_error: Exception | None = None
     for attempt in range(config.MAX_RETRIES):

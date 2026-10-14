@@ -1,0 +1,438 @@
+Cache is OFF for this run — that's deliberate.
+
+matching query completes  (example wardrobe)
+  query: vintage graphic tee under $30
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 1: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Casual Y2K Streetwear** Pair the baby tee with your **Baggy straight-leg jeans, dark wash**. Cinch…
+[5] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 2: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Casual Y2K Streetwear** Pair the baby tee with your **Baggy straight-leg jeans, dark wash**. Cinch…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: scored this little depop butterfly tee for only $18.00 and I am so obsessed with the early 2000s mallrat energ…
+  try 3: completed — fit card 244 chars
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 4: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Casual Streetwear** Pair the butterfly baby tee with your **baggy straight-leg jeans, dark wash**,…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: still obsessed that I snagged this butterfly baby tee for just $18.00 on depop. it’s giving major early 2000s …
+  try 5: completed — fit card 179 chars
+
+impossible query stops early  (example wardrobe)
+  query: designer ballgown size XXS under $5
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 1: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 2: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 3: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 4: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 5: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+
+empty wardrobe  (empty wardrobe)
+  query: denim jacket under $50
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] suggest_outfit
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped, wardrobe of 0 items
+      out: A vintage Wrangler cropped denim jacket is a versatile staple. Because of the light wash and structured should…
+      →    empty wardrobe -> general advice
+[5] create_fit_card
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped
+      out: scored this vintage wrangler denim jacket on poshmark for just $42.00 and i'm already obsessed with the struct…
+  try 1: completed — fit card 261 chars
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 2: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] suggest_outfit
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped, wardrobe of 0 items
+      out: A vintage Wrangler denim jacket is a timeless wardrobe staple. Here are two ways to style it:  **1. Casual & B…
+      →    empty wardrobe -> general advice
+[5] create_fit_card
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped
+      out: Still can't believe I scored this vintage Wrangler denim jacket on poshmark for only $42.00! The structured sh…
+  try 3: completed — fit card 296 chars
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 4: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] suggest_outfit
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped, wardrobe of 0 items
+      out: **Idea 1: Off-Duty Casual** Pair the cropped jacket with high-waisted, wide-leg trousers in black or olive. Th…
+      →    empty wardrobe -> general advice
+[5] create_fit_card
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped
+      out: Scored this vintage Wrangler denim jacket on Poshmark for just $42.00 and I’m obsessed with the structured sho…
+  try 5: completed — fit card 242 chars
+
+selected item reaches suggest_outfit  (example wardrobe)
+  query: 90s track jacket in size M
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: Sporty Streetwear** Layer the 90s track jacket over the white ribbed tank top, and pair them with …
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: scored this vintage champion 90s track jacket on poshmark for $45.00 and i'm obsessed with the sporty streetwe…
+  try 1: completed — fit card 173 chars
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: Casual Streetwear** Pair the track jacket with the white ribbed tank top underneath and your baggy…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: scored this champion navy and white stripe track jacket on poshmark for $45.00 and it’s giving the ultimate 90…
+  try 2: completed — fit card 212 chars
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: Casual Streetwear** Pair the Champion track jacket with the white ribbed tank top as a base. For b…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: scored this vintage Champion 90s track jacket on poshmark for just $45.00 and I am obsessed with the sporty st…
+  try 3: completed — fit card 226 chars
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: Casual Streetwear** Pair the 90s Track Jacket with the white ribbed tank top layered underneath, w…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: Still can't believe I scored this vintage Champion 90s track jacket on Poshmark for just $45.00—the navy and w…
+  try 4: completed — fit card 270 chars
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: Sporty Streetwear** Pair the 90s track jacket with the white ribbed tank top layered underneath, a…
+[5] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 5: stopped early — I found an item but can't write the outfit or fit card becau
+
+fit card has price and platform  (example wardrobe)
+  query: silk slip dress in midi length under $40
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1: Casual Grunge** Layer your **Oversized grey crewneck sweatshirt** directly over the slip dress to …
+[5] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 1: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1: Casual Grunge** Layer your **Oversized grey crewneck sweatshirt** directly over the slip dress to …
+[5] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 2: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1: Casual Grunge** Layer your oversized grey crewneck sweatshirt directly over the slip dress to tran…
+[5] model unavailable
+      →    Couldn't reach the model: Server disconnected without sending a response.
+  try 3: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 4: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1: 90s Grunge Casual** Layer your oversized grey crewneck sweatshirt directly over the slip dress, le…
+[5] create_fit_card
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length
+      out: scored this dreamy little floral dress on depop for just $30.00 and I am already obsessed with it. the grunge …
+  try 5: completed — fit card 156 chars
+
+price and size filters hold  (example wardrobe)
+  query: tee size L under $25
+[1] parse query
+      in:  tee size L under $25
+      out: {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+      out: 2 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey
+[3] select item
+      in:  2 results
+      out: id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+[4] suggest_outfit
+      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style, wardrobe of 10 items
+      out: **Outfit 1: Casual Streetwear** Pair the graphic tee with your baggy straight-leg jeans, cinched with the brow…
+[5] create_fit_card
+      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+      out: still obsessed that I scored this vintage tour bootleg tee on depop for just $24.00. the wash is so good and i…
+  try 1: completed — fit card 161 chars
+[1] parse query
+      in:  tee size L under $25
+      out: {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+      out: 2 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey
+[3] select item
+      in:  2 results
+      out: id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+[4] suggest_outfit
+      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style, wardrobe of 10 items
+      out: **Outfit 1: Casual Streetwear** Pair the graphic tee with your baggy straight-leg jeans, cinched with the brow…
+[5] create_fit_card
+      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+      out: scored this vintage tour bootleg tee on depop for just $24.00 and I am literally obsessed with the faded graph…
+  try 2: completed — fit card 203 chars
+[1] parse query
+      in:  tee size L under $25
+      out: {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+      out: 2 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey
+[3] select item
+      in:  2 results
+      out: id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+[4] suggest_outfit
+      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style, wardrobe of 10 items
+      out: **Outfit 1: Casual Streetwear** Pair the graphic tee with your baggy straight-leg jeans, cinched at the waist …
+[5] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 3: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  tee size L under $25
+      out: {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+      out: 2 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey
+[3] select item
+      in:  2 results
+      out: id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+[4] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 4: stopped early — I found an item but can't write the outfit or fit card becau
+[1] parse query
+      in:  tee size L under $25
+      out: {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+      out: 2 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey
+[3] select item
+      in:  2 results
+      out: id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+[4] model unavailable
+      →    Couldn't reach the model: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is current
+  try 5: stopped early — I found an item but can't write the outfit or fit card becau
+
+Wrote results\run_2026-10-13_0843_before.md
+43 model calls this session, 6783 prompt + 2909 output tokens
+
+Commit this file. It's the evidence the test actually happened.
