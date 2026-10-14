@@ -222,6 +222,18 @@ scored these vintage Levi's 501 jeans on depop for just $38.00 and I'm obsessed 
 - *What came back:* Its first edit was applied through a shell script and the prompt strings in `suggest_outfit` were broken by newline escaping, so `import tools` failed with `SyntaxError: unterminated f-string literal`.
 - *What I changed:* I had it `git checkout tools.py` and re-apply the same edit from a script file. Then I tested instead of trusting it: `search_listings(size='S')` returned only S, S/M sizes (no "US 9"), `size='L'` returned L and L/XL (no "XL"), an impossible query returned `[]`, and with `AI201_CACHE=0` three runs of `create_fit_card` on the same item gave three different captions, so temperature 0.9 is working.
 
+**Moment 3 (unit 4)**
+
+- *What I asked for:* After the model kept returning 503, I asked Claude to run my `before` eval on Haiku through my Pro plan.
+- *What came back:* It told me the Gemini adapter can't call Haiku, then found that `claude -p --model haiku` works with my plan, and added an optional `AI201_PROVIDER=claude` branch to `generate.py` (default still Gemini). It also said there is no "Haiku 5.5"; the latest Haiku is 4.5.
+- *What I changed:* I kept the change but made sure it is off by default and wrote it up honestly at the bottom of this README, including that `config.TEMPERATURE` doesn't apply to the Haiku runs. I also noticed my first plan (just editing `AI201_MODEL`) would not have worked, and the model listing Claude pulled showed `gemini-2.5-flash` isn't available on my key.
+
+**Moment 4 (unit 4)**
+
+- *What I asked for:* I asked Claude to argue against my own verdict that criterion 5 was MET.
+- *What came back:* It pointed out that my test query (`'tee size L under $25'`) returned the same two items with a plain substring size check as with my whole-token rule, so the PASS proved nothing about the size rule, and then it showed me a query that could tell them apart.
+- *What I changed:* I replaced that scenario with `'top size S under $30'` (a substring check also returns `XL (oversized)` and `US 9` for it), added a `--criterion` flag to `run_eval.py` so I could re-run just that one, re-ran it, and wrote the old test's weakness into the README instead of hiding it.
+
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
      Don't fill these in during unit 3.
@@ -521,11 +533,16 @@ The honest limit is the sample. One failure in five before and none in five afte
 
 ## What's Still Broken
 
-<!-- For each criterion still missed: what you'd do, and why you stopped where
-     you did. "I ran out of time" is fine if it's true. Pretending nothing is
-     left is not. -->
+No criterion is MISSED on the run I'm submitting (Haiku, `before` and `after`), so there is nothing "missed" to fix. That doesn't mean it works. This is what I know is still wrong, and why I stopped.
 
+1. **It fails on the default model (the biggest one).** On `gemini-3.5-flash-lite` the same agent failed most of the time in the evening of 2026-10-13: 503 or "Server disconnected" on 12 to 25 of the model-using tries per run, and `gemini-3.5-flash` then hit a daily-quota 429. Read against my targets that would be MISSED on criteria 1, 3 and 4. The agent handles it gracefully (the Milestone 2 handler prints a clear message, nothing crashes), but it still gives the user nothing. What I'd do: make `generate.py` retry a `503` the way it retries a `429`, with a short backoff. Why I stopped: the quota on my key was used up, so I couldn't test a retry honestly, and putting it in would have changed the model layer between `before` and `after`, which the improvement rule says to avoid.
+2. **Search relevance isn't measured, and it's weak.** `search_listings` ranks by keyword overlap only. `'graphic tee'` under $30 returns a mesh long-sleeve top and a navy crewneck sweatshirt (its own description says "No graphics"), and a user who sees them would call the search broken. Criterion 1 can't catch it because it only checks that a fit card came back. What I'd do: weight matches in `category` and `style_tags` above matches in free text, and add a criterion like "the selected item's tags match the query". Why I stopped: that is a new criterion plus a tool change, which is more than the one improvement allowed.
+3. **Criterion 3 is measured by the trace, which can't really disagree with the session.** The `id` shown at each step comes from `session["selected_item"]`, so the check passes unless someone rewrites the loop. A spy on the arguments `suggest_outfit` actually receives would be a real test. I did it once by hand (`received is session["selected_item"]` was `True`) but didn't put it into `run_eval.py`. Why I stopped: it doesn't change any verdict today.
+4. **The 4b improvement is not proven.** Four of five before, five of five after is within what luck can produce (about a one in three chance of five clean tries even if nothing changed). I'd run 20 tries on that one scenario. Why I stopped: each try costs two model calls and I'd already burned through a lot of quota on the failed runs.
+5. **The query parser is plain string splitting.** It understands `$30`, `under 30` and `size M`. It can't handle "under thirty dollars", "S or M", or a size written the way the data writes it ("W30 L30", "US 8.5") unless the user types it exactly. Why I stopped: no criterion tests parsing, and the scenarios I wrote all use the supported forms, so I'd be fixing something my test can't see.
+6. **My Haiku runs aren't reproducible by anyone else.** The `AI201_PROVIDER=claude` path shells out to the `claude` command on my machine and uses my own plan, with no temperature setting and about ten seconds per call. It is off unless the environment variable is set, and the default is still Gemini, but a grader running `python run_eval.py` with only a Gemini key will get the Gemini behaviour, not the numbers in this README.
 
+**On the MCP move.** I registered `search_listings` in `mcp_server.py` and changed one line in `agent.py::run_agent` from `search_listings(**session["parsed"])` to `call_tool("search_listings", session["parsed"])`. Nothing behaved differently: the MCP result was equal to the direct call for `'graphic tee'` under $30, and an impossible query still came back as `[]`. What I did notice is the cost: `mcp_client.call_tool` starts and stops the server on every call, so each search now spawns a new process. For one search per run that's fine, but it is a seam I would not put inside a loop that searches repeatedly.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
