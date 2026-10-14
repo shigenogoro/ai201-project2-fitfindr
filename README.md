@@ -481,26 +481,41 @@ I registered `search_listings` in `mcp_server.py` and changed one line in `agent
 
      `python run_eval.py --label after` -->
 
-**What I changed:**
+**What I changed:** One prompt, in `tools.py::create_fit_card`. Before: "Write a 2-4 sentence caption ...". After: "Write a caption ... It must be exactly three sentences, and every sentence must end with a period, exclamation mark or question mark (no run-on single sentence, no trailing fragment)." Everything else in the prompt (mention the item, its price and its platform once each, sound like a real post, output only the caption) is unchanged. Nothing else changed between the two runs: same agent, same provider and model (`AI201_PROVIDER=claude`, `AI201_MODEL=haiku`), same scenarios, same caching-off setting.
 
-**Which failure it was meant to fix:**
+**Which failure it was meant to fix:** Criterion 4b, the only try that failed in the `before` run. In try 4 of the fit-card scenario the model wrote one long sentence with no full stop. Place: the model's output. Mechanism: "2-4 sentences" is a range the model is free to ignore and nothing in the prompt said what a sentence boundary looks like, so a caption written as a single flowing line was allowed. It was also the criterion that scored exactly at its target (4 of 5), so one more miss would have turned it MISSED.
 
-### Run Log — After
+### Run Log — Before
+
+Same numbers as the run log above (`results/run_2026-10-13_2336_before.md`, plus `results/run_2026-10-13_2355_before_c5.md` for row 5), repeated here so the two tables sit side by side.
 
 | Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
 |---|---|---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |  |  |
+| 1. Matching query completes all three tools and returns a fit card | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before `suggest_outfit`, message names what to change | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. `selected_item` id equals the id that reached `suggest_outfit` and `create_fit_card` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4a. Fit card contains the item's price and platform | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4b. Fit card is 2 to 4 sentences | 4 of 5 | PASS | PASS | PASS | FAIL | PASS | MET (4/5) |
+| 5. Every search result is within `max_price` and matches `size` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
-**Did it help, and how do I know:**
+### Run Log — After
 
-<!-- If it made things worse, say that. Honestly reported, that earns full
-     credit and is more interesting than one that worked. -->
+`python run_eval.py --label after`, raw output in `results/run_2026-10-14_0009_after.md`.
 
+| Criterion | Target | Try 1 | Try 2 | Try 3 | Try 4 | Try 5 | Verdict |
+|---|---|---|---|---|---|---|---|
+| 1. Matching query completes all three tools and returns a fit card | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 2. Impossible query stops before `suggest_outfit`, message names what to change | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 3. `selected_item` id equals the id that reached `suggest_outfit` and `create_fit_card` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4a. Fit card contains the item's price and platform | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 4b. Fit card is 2 to 4 sentences | 4 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Every search result is within `max_price` and matches `size` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
+I judged the after run the same way as the before run (same checks, same by-hand counting; I also ran both files through one small script so the sentence count is the same rule for both: split on `.`, `!`, `?` and count the pieces that contain a word).
+
+**Did it help, and how do I know:** Only on the one row it was aimed at, and only slightly. 4b went from 4 of 5 to 5 of 5: all five after-run cards are three sentences, each ending in punctuation (before: sentence counts 3, 3, 3, 1, 3). Nothing else moved, and nothing got worse: 4a still has the price and platform in all five, and the other rows are unchanged. I also read the five new cards and they still sound like posts and still differ from each other, so forcing "exactly three sentences" did not flatten them (one ends a sentence with "?" where a statement would read better: "i'm obsessed?").
+
+The honest limit is the sample. One failure in five before and none in five after cannot tell a fix from luck: if the real miss rate had been 20% and the change did nothing, five clean tries would still come up about a third of the time (0.8^5 = 0.33). The prompt gives a concrete reason to expect the improvement (it now says what a sentence ends with, which is the thing the failing card lacked), but I haven't shown it with these numbers. To show it I'd need something like 20 tries on this scenario, not 5.
 
 ---
 

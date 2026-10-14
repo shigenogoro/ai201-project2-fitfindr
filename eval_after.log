@@ -1,0 +1,474 @@
+Cache is OFF for this run — that's deliberate.
+
+matching query completes  (example wardrobe)
+  query: vintage graphic tee under $30
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Classic Y2K** Y2K Baby Tee + Baggy straight-leg jeans + Black cropped zip hoodie + Chunky white sn…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: finally thrifted the y2k butterfly baby tee of my dreams on depop for $18.00! the fitted crop and delicate but…
+  try 1: completed — fit card 223 chars
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Casual Y2K** Pair the **Y2K Baby Tee — Butterfly Print** with your **Baggy straight-leg jeans, dar…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: just scored this butterfly baby tee on depop for $18.00 and the early 2000s are officially calling me back. th…
+  try 2: completed — fit card 402 chars
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Y2K Casual** Y2K Baby Tee — Butterfly Print + Baggy straight-leg jeans, dark wash + Black combat b…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: found this butterfly baby tee on depop for $18.00 and i'm obsessed! the early 2000s nostalgia is hitting diffe…
+  try 3: completed — fit card 273 chars
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Classic Y2K** Pair the Y2K Baby Tee — Butterfly Print with your Baggy straight-leg jeans, dark was…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: just copped this butterfly baby tee on depop for $18.00 and i'm officially in my y2k era. the cropped fit and …
+  try 4: completed — fit card 303 chars
+[1] parse query
+      in:  vintage graphic tee under $30
+      out: {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'vintage graphic tee', 'size': None, 'max_price': 30.0}
+      out: 10 items: Y2K Baby Tee — Butterfly Print, Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey … +7 more
+[3] select item
+      in:  10 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1:** Pair the **Y2K Baby Tee — Butterfly Print** with your **Baggy straight-leg jeans, dark wash** fo…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: just scored this y2k baby tee with the cutest butterfly print on depop for $18.00 and i'm obsessed. the early …
+  try 5: completed — fit card 265 chars
+
+impossible query stops early  (example wardrobe)
+  query: designer ballgown size XXS under $5
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 1: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 2: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 3: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 4: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+[1] parse query
+      in:  designer ballgown size XXS under $5
+      out: {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'designer ballgown', 'size': 'XXS', 'max_price': 5.0}
+      out: [] (empty)
+[3] branch
+      →    search returned nothing -> stopping, suggest_outfit not called
+  try 5: stopped early — No listings matched keywords 'designer ballgown', size XXS, 
+
+empty wardrobe  (empty wardrobe)
+  query: denim jacket under $50
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] suggest_outfit
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped, wardrobe of 0 items
+      out: A cropped light-wash denim jacket is incredibly versatile. Here are two directions:  **Classic Casual:** Pair …
+      →    empty wardrobe -> general advice
+[5] create_fit_card
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped
+      out: just scored this cropped light-wash denim jacket on poshmark for $42.00 and i'm obsessed with the structured s…
+  try 1: completed — fit card 318 chars
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] suggest_outfit
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped, wardrobe of 0 items
+      out: This light-wash cropped jacket is a versatile wardrobe staple. Those structured shoulders give it edge, making…
+      →    empty wardrobe -> general advice
+[5] create_fit_card
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped
+      out: Found this light-wash cropped denim jacket on Poshmark for $42.00 and honestly it's giving 90s cool girl with …
+  try 2: completed — fit card 344 chars
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] suggest_outfit
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped, wardrobe of 0 items
+      out: Great find! Here are two versatile ways to style it:  **Classic Casual**: Pair with a white ribbed tank or fit…
+      →    empty wardrobe -> general advice
+[5] create_fit_card
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped
+      out: just scored this light wash cropped denim jacket on poshmark for $42.00 and the structured shoulders are *chef…
+  try 3: completed — fit card 270 chars
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] suggest_outfit
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped, wardrobe of 0 items
+      out: # Styling Ideas for Your Cropped Denim Jacket  **Casual Cool:** Pair with a fitted white or black tee and high…
+      →    empty wardrobe -> general advice
+[5] create_fit_card
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped
+      out: scored this cropped wrangler denim jacket for $42.00 on poshmark and i'm obsessed with how clean it is. it's g…
+  try 4: completed — fit card 296 chars
+[1] parse query
+      in:  denim jacket under $50
+      out: {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'denim jacket', 'size': None, 'max_price': 50.0}
+      out: 6 items: Denim Jacket — Light Wash, Cropped, Vintage Levi's 501 Jeans — Medium Wash, 90s Track Jacket — Navy/White Stripe … +3 more
+[3] select item
+      in:  6 results
+      out: id lst_007 Denim Jacket — Light Wash, Cropped
+[4] suggest_outfit
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped, wardrobe of 0 items
+      out: Great find! This jacket has tons of potential. Here are two directions:  **Casual + Modern**: Pair it with hig…
+      →    empty wardrobe -> general advice
+[5] create_fit_card
+      in:  id lst_007 Denim Jacket — Light Wash, Cropped
+      out: found this light wash cropped denim jacket on poshmark for $42.00 and literally cannot stop wearing it! the st…
+  try 5: completed — fit card 296 chars
+
+selected item reaches suggest_outfit  (example wardrobe)
+  query: 90s track jacket in size M
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: Authentic 90s** Pair the **90s Track Jacket — Navy/White Stripe** with your **Baggy straight-leg j…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: found this champion 90s track jacket on poshmark for $45.00 and i'm genuinely obsessed. the navy and white str…
+  try 1: completed — fit card 253 chars
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: 90s Core** Navy/White Stripe track jacket with Baggy straight-leg jeans, dark wash, White ribbed t…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: found this holy grail 90s track jacket on poshmark for $45.00 and i genuinely cannot stop wearing it. the navy…
+  try 2: completed — fit card 332 chars
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: # Track Jacket Outfit Ideas  **Outfit 1: Classic 90s Vibe** Layer the track jacket over your **white ribbed ta…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: just copped this 90s track jacket off poshmark for $45.00 and the nostalgia is REAL. the navy and white stripe…
+  try 3: completed — fit card 243 chars
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: Casual 90s Vibe** Baggy straight-leg jeans, dark wash + White ribbed tank top + 90s Track Jacket —…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: Just scored this champion 90s track jacket (navy/white stripe situation) for $45.00 on poshmark and i'm alread…
+  try 4: completed — fit card 293 chars
+[1] parse query
+      in:  90s track jacket in size M
+      out: {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+[2] search_listings (via MCP)
+      in:  {'description': '90s track jacket in', 'size': 'M', 'max_price': None}
+      out: 3 items: 90s Track Jacket — Navy/White Stripe, 90s Silk Slip Dress — Floral, Midi Length, 90s Leather Bomber — Black
+[3] select item
+      in:  3 results
+      out: id lst_004 90s Track Jacket — Navy/White Stripe
+[4] suggest_outfit
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe, wardrobe of 10 items
+      out: **Outfit 1: Casual 90s Core** Navy/White Stripe 90s Track Jacket over White ribbed tank top, paired with Baggy…
+[5] create_fit_card
+      in:  id lst_004 90s Track Jacket — Navy/White Stripe
+      out: scored this navy/white striped 90s track jacket on poshmark for $45.00 and it's going to be in heavy rotation!…
+  try 5: completed — fit card 305 chars
+
+fit card has price and platform  (example wardrobe)
+  query: silk slip dress in midi length under $40
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1: Edgy 90s Vibes** Wear the slip dress as-is with your **Black combat boots** and **Vintage black de…
+[5] create_fit_card
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length
+      out: just scored this dreamy 90s slip dress on depop for $30.00 and i cannot stop thinking about it. the muted flor…
+  try 1: completed — fit card 348 chars
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1:** Wear the slip dress as a dress with the **Vintage black denim jacket** for an effortlessly cool …
+[5] create_fit_card
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length
+      out: just scored this delicate floral 90s slip dress on depop for $30.00 and i'm never taking it off. the muted pri…
+  try 2: completed — fit card 306 chars
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1:** 90s Silk Slip Dress + Vintage black denim jacket + Black combat boots + Black crossbody bag. An …
+[5] create_fit_card
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length
+      out: found this muted floral 90s slip dress on depop for $30.00 and it's literally the most versatile thrift find e…
+  try 3: completed — fit card 323 chars
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1: Soft 90s Remix** 90s Silk Slip Dress over White ribbed tank top, paired with Baggy straight-leg je…
+[5] create_fit_card
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length
+      out: literally just found this muted floral 90s slip dress on depop for $30.00 and i'm obsessed? there's a tiny sna…
+  try 4: completed — fit card 269 chars
+[1] parse query
+      in:  silk slip dress in midi length under $40
+      out: {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'silk slip dress in midi length', 'size': None, 'max_price': 40.0}
+      out: 2 items: 90s Silk Slip Dress — Floral, Midi Length, Silk Button-Down — Sage Green
+[3] select item
+      in:  2 results
+      out: id lst_013 90s Silk Slip Dress — Floral, Midi Length
+[4] suggest_outfit
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length, wardrobe of 10 items
+      out: **Outfit 1: Relaxed & Layered** Pair the slip dress with your **Oversized grey crewneck sweatshirt**, **Baggy …
+[5] create_fit_card
+      in:  id lst_013 90s Silk Slip Dress — Floral, Midi Length
+      out: just scored this 90s silk slip dress on depop for $30.00 and i'm obsessed with the muted floral print. the mid…
+  try 5: completed — fit card 326 chars
+
+price and size filters hold  (example wardrobe)
+  query: top size S under $30
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1:** Y2K Baby Tee — Butterfly Print + Baggy straight-leg jeans, dark wash + Chunky white sneakers + V…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: literally cannot stop thinking about this butterfly y2k baby tee i snagged on depop for $18.00. the fitted cro…
+  try 1: completed — fit card 259 chars
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1 (Classic Y2K):** Y2K Baby Tee with Butterfly Print + Baggy straight-leg jeans, dark wash + Chunky w…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: found this y2k butterfly baby tee on depop for $18.00 and honestly i'm obsessed with how it gives early 2000s …
+  try 2: completed — fit card 299 chars
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1:** Pair the baby tee with your **Baggy straight-leg jeans, dark wash**, **Chunky white sneakers**, …
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: found this y2k butterfly baby tee on depop for $18.00 and honestly it's a STEAL. the cropped fit is everything…
+  try 3: completed — fit card 225 chars
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1 (Casual Y2K):** Y2K Baby Tee — Butterfly Print, Baggy straight-leg jeans, dark wash, Chunky white s…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: just scored this cute butterfly baby tee on depop for $18.00 and i'm obsessed with the early 2000s nostalgia. …
+  try 4: completed — fit card 297 chars
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Y2K Casual** Pair the **Y2K Baby Tee — Butterfly Print** with your **Baggy straight-leg jeans, dar…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: just scored this butterfly baby tee on depop for $18.00 and i'm literally obsessed! the fitted crop and early-…
+  try 5: completed — fit card 262 chars
+
+Wrote results\run_2026-10-14_0009_after.md
+50 model calls this session
+
+Commit this file. It's the evidence the test actually happened.

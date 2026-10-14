@@ -222,9 +222,11 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
     prompt = (
         f"Item: {_describe(new_item)}\n"
         f"Outfit idea: {outfit}\n\n"
-        "Write a 2-4 sentence caption someone would actually post about this "
-        "thrift find. It must read like a real social post, not a product "
-        f"description. Mention the item, its price (${new_item['price']:.2f}) and "
+        "Write a caption someone would actually post about this thrift find. "
+        "It must be exactly three sentences, and every sentence must end with "
+        "a period, exclamation mark or question mark (no run-on single "
+        "sentence, no trailing fragment). It must read like a real social "
+        f"post, not a product description. Mention the item, its price (${new_item['price']:.2f}) and "
         f"the platform ({new_item['platform']}) exactly once each, and be "
         "specific about the vibe. Output only the caption."
     )
