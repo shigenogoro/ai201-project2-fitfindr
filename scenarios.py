@@ -53,8 +53,11 @@ SCENARIOS = [
     },
     {
         # Search filters: every result must be within price and size. Criterion 5.
+        # "top ... size S" is chosen because a plain substring size test would
+        # also return "XL (oversized)" and "US 9" here; whole-token matching
+        # must not. (The earlier "tee size L" query could not tell them apart.)
         "name": "price and size filters hold",
-        "query": "tee size L under $25",
+        "query": "top size S under $30",
         "wardrobe": "example",
         "criterion": 5,
     },

@@ -247,11 +247,11 @@ scored these vintage Levi's 501 jeans on depop for just $38.00 and I'm obsessed 
 | 3. `selected_item` id equals the id that reached `suggest_outfit` and `create_fit_card` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 | 4a. Fit card contains the item's price and platform | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 | 4b. Fit card is 2 to 4 sentences | 4 of 5 | PASS | PASS | PASS | FAIL | PASS | MET (4/5) |
-| 5. Every search result is within `max_price` and matches `size` | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
+| 5. Every search result is within `max_price` and matches `size` (re-run, see below) | 5 of 5 | PASS | PASS | PASS | PASS | PASS | MET (5/5) |
 
-Criterion 4 has two clauses with different targets in `criteria.md`, so it gets two rows (4a, 4b). Every row was run through `python run_eval.py --label before` with caching off; the raw output is in `results/run_2026-10-13_2336_before.md`. This run used Haiku through `claude -p`, not Gemini — see "Model availability problem" at the bottom of this file.
+Criterion 4 has two clauses with different targets in `criteria.md`, so it gets two rows (4a, 4b). Rows 1 to 4 come from `python run_eval.py --label before` with caching off; the raw output is in `results/run_2026-10-13_2336_before.md`. Row 5 was re-run on its own with `python run_eval.py --label before_c5 --criterion 5` (raw output in `results/run_2026-10-13_2355_before_c5.md`) because my first scenario for it could not fail: see the Verdicts section. The agent was not changed between the two runs, only that scenario's query. This run used Haiku through `claude -p`, not Gemini — see "Model availability problem" at the bottom of this file.
 
-How I decided each try: 1 = a fit card came back; 2 = the trace stops at the `branch` step with no `suggest_outfit` step and the message names the filters; 3 = the `id` in the `select item`, `suggest_outfit` and `create_fit_card` steps is the same; 4a = the item's price (`$30` or `$30.00`) and platform name both appear in the card; 4b = I counted sentences by hand; 5 = I re-ran `search_listings` with the parsed arguments and checked every result's `price` and `size` (the results file only records titles). The one 4b miss (try 4) is a single run-on sentence with no full stop: "found this delicate floral silk slip on depop for $30.00 and it's already become my favorite layering piece—…which wasn't even the plan".
+How I decided each try: 1 = a fit card came back; 2 = the trace stops at the `branch` step with no `suggest_outfit` step and the message names the filters; 3 = the `id` in the `select item`, `suggest_outfit` and `create_fit_card` steps is the same; 4a = the item's price (`$30` or `$30.00`) and platform name both appear in the card; 4b = I counted sentences by hand; 5 = I checked every result's `price` and `size` by re-running `search_listings` with the parsed arguments (the results file only records titles); all five tries returned the same three items, all `S/M`, priced $18, $15 and $22. The one 4b miss (try 4) is a single run-on sentence with no full stop: "found this delicate floral silk slip on depop for $30.00 and it's already become my favorite layering piece—…which wasn't even the plan".
 
 **Real output from one try per criterion**, pasted as text, naming the file and function that produced it:
 
@@ -340,27 +340,27 @@ $ python app.py ask 'silk slip dress in midi length under $40' --trace   (try 1)
 Fit card: found this 90s floral slip dress on depop for $30 and literally wore it the next day. there's a tiny snag on the side seam that nobody will ever see, but honestly it just adds to the vintage charm at this point. paired it with my black denim jacket and suddenly i'm having a whole grunge moment—this dress is the vibe.
 ```
 
-**Criterion 5 — price and size filters hold (`tools.py::search_listings`, called via `mcp_server.py`)**
+**Criterion 5 — price and size filters hold (`tools.py::search_listings`, called via `mcp_server.py`)** — from `results/run_2026-10-13_2355_before_c5.md`, the re-run described below
 
 ```
-$ python app.py ask 'tee size L under $25' --trace   (try 1)
+$ python app.py ask 'top size S under $30' --trace   (try 1)
 [1] parse query
-      in:  tee size L under $25
-      out: {'description': 'tee', 'size': 'L', 'max_price': 25.0}
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
 [2] search_listings (via MCP)
-      in:  {'description': 'tee', 'size': 'L', 'max_price': 25.0}
-      out: 2 items: Graphic Tee — 2003 Tour Bootleg Style, Vintage Band Tee — Faded Grey
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
 [3] select item
-      in:  2 results
-      out: id lst_006 Graphic Tee — 2003 Tour Bootleg Style
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
 [4] suggest_outfit
-      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style, wardrobe of 10 items
-      out: **Outfit 1: Grunge-Vintage** Graphic Tee with **Baggy straight-leg jeans, dark wash**, **Vintage black denim j…
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Casual Y2K** Pair the Y2K Baby Tee with your **Baggy straight-leg jeans, dark wash**. Layer with t…
 [5] create_fit_card
-      in:  id lst_006 Graphic Tee — 2003 Tour Bootleg Style
-      out: found this 2003 tour bootleg tee on depop for $24.00 and the faded graphic is actually perfect 🖤 soft 100% cot…
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: found this butterfly baby tee on depop for $18 and i'm obsessed 🦋 the fitted crop is *chef's kiss* early 2000s…
 
-Fit card: found this 2003 tour bootleg tee on depop for $24.00 and the faded graphic is actually perfect 🖤 soft 100% cotton, boxy fit, looks like it's been through everything—which is exactly the vibe i'm going for. obsessed
+Fit card: found this butterfly baby tee on depop for $18 and i'm obsessed 🦋 the fitted crop is *chef's kiss* early 2000s energy and already goes with everything. gonna be living in this all season
 ```
 
 ---
@@ -385,15 +385,28 @@ Fit card: found this 2003 tour bootleg tee on depop for $24.00 and the faded gra
 
 | # | Criterion | Target | Verdict | How I decided |
 |---|---|---|---|---|
-| 1 |  |  |  |  |
-| 2 |  |  |  |  |
-| 3 |  |  |  |  |
-| 4 |  |  |  |  |
-| 5 |  |  |  |  |
+| 1 | Matching query completes all three tools and returns a fit card | 4 of 5 | MET (5/5) | A fit card came back in all five tries of `'vintage graphic tee under $30'`, and none of the five stopped early. |
+| 2 | Impossible query stops before `suggest_outfit`, message names what to change | 5 of 5 | MET (5/5) | All five traces end at the `branch` step with no `suggest_outfit` step and `fit_card` still `None`; every message listed the keywords, size and price I had asked for and what to change. |
+| 3 | `selected_item` id equals the id that reached `suggest_outfit` and `create_fit_card` | 5 of 5 | MET (5/5) | The id printed at `select item`, `suggest_outfit` and `create_fit_card` was the same in all five traces. |
+| 4a | Fit card contains the item's price and platform | 5 of 5 | MET (5/5) | I looked for the price (`$30` or `$30.00`) and `depop` in each card by hand; all five had both. |
+| 4b | Fit card is 2 to 4 sentences | 4 of 5 | MET (4/5) | Four cards had 2 to 3 sentences. Try 4 was one long sentence with no full stop, so it failed; four of five is exactly the target. |
+| 5 | Every search result is within `max_price` and matches `size` | 5 of 5 | MET (5/5), after fixing the test | Re-run with `'top size S under $30'`: all five tries returned the same three items (sizes `S/M`, prices $18, $15, $22). A substring size test returns six items for this query, adding `XL (oversized)`, `XL (fits oversized)` and `US 9`, so this scenario can tell the two apart. My first scenario (`'tee size L under $25'`) could not: I ran it with a deliberately wrong substring size test and it returned the same two items, so a PASS there proved nothing about the size rule. |
 
 **Diagnoses**
 
+I missed nothing against the Haiku run, so there is no miss to diagnose from it. I don't think that means the agent is done, so here is how I'd read it plainly.
 
+*My targets were too easy in two places, and one test was too weak.*
+
+- **Criterion 1** is the one I'd tighten. "Completes" only checks that a card came back, not that the item was the right one. The search ranks by keyword overlap only: `'graphic tee'` under $30 also returns a mesh long-sleeve top and a navy crewneck sweatshirt whose own description says "No graphics". Those got through because one word in their descriptions matched. A card for the wrong item would still have counted as a PASS. I'd add a clause: the selected item's category or style tags match the query.
+- **Criterion 5** — the test, not the target. The first scenario I wrote for it (`'tee size L under $25'`) passed 5 of 5, but it would have passed with the wrong size rule too, so I replaced the query with `'top size S under $30'` and re-ran only that scenario. The agent itself did not change. This is a change to the scenario in `scenarios.py`, not to the criterion in `criteria.md`, whose wording and 5-of-5 target I left alone.
+- **Criterion 3** is close to a tautology the way I measured it. The `id` printed in the trace comes from `session["selected_item"]`, which is also what the call is given, so the two can't disagree unless somebody rewrites the loop. A better test spies on the arguments `suggest_outfit` actually receives. I did that once by hand (a wrapper around `suggest_outfit` confirmed `received is session["selected_item"]` was `True`) but it isn't part of `run_eval.py`.
+
+*Where the agent was actually weak.* Before I switched models, the same agent on the default `gemini-3.5-flash-lite` failed most of the time. Read against my targets, that evening's runs would have been MISSED on criteria 1, 3, 4 and 5 (for example `run_2026-10-13_2141_before.md`: every try that needed the model failed, 25 of 25). The mechanism is in the model's service plus one thing I can fix: `generate.py` only retries `429` and treats `503` as "model unavailable" straight away, so a transient `503` ends the run. The agent did the right thing when it happened (the Milestone 2 handler printed a clear message and nothing crashed), but that is graceful failure, not success. I'm reporting this as a finding, not counting it toward the Haiku verdicts, because the service problem and my agent are mixed together in those runs. The detail is in "Model availability problem" at the bottom of this file.
+
+*Pattern.* If I had to name one problem, it's that every place my agent can fail on content (relevance of the search result, wording of the fit card) is judged only by whether something came back. The branch (criterion 2) and the filters (criterion 5) are deterministic and held. The model-dependent parts held too, but my criteria for them are the loosest ones.
+
+*One thing I noticed in a passing try.* Try 4 of the fit-card scenario is a run-on: "found this delicate floral silk slip on depop for $30.00 and it's already become my favorite layering piece—the muted print screams quiet 90s but it actually plays so well with my edgier pieces, which wasn't even the plan". Place: the model's output. Mechanism: the prompt says "2-4 sentences" but nothing enforces it, so a one-sentence caption is possible about one run in five. It's the 4b miss I allowed myself and it landed exactly at the limit.
 
 ---
 

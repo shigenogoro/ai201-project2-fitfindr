@@ -68,6 +68,8 @@ def main():
     parser.add_argument("--tries", "--trials", type=int, default=5, dest="tries",
                         help="tries per scenario (default 5, matching your criteria)")
     parser.add_argument("--label", default="", help="a name for this run, e.g. 'before'")
+    parser.add_argument("--criterion", type=int, default=None,
+                        help="run only the scenarios for this criterion number")
     args = parser.parse_args()
 
     problems = scenario_module.validate()
@@ -90,6 +92,8 @@ def main():
 
     rows = []
     for scenario in scenario_module.SCENARIOS:
+        if args.criterion is not None and scenario.get("criterion") != args.criterion:
+            continue
         print(f"{scenario['name']}  ({scenario['wardrobe']} wardrobe)")
         print(f"  query: {scenario['query']}")
 

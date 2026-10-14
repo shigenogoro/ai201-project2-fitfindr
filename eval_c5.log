@@ -1,0 +1,89 @@
+Cache is OFF for this run — that's deliberate.
+
+price and size filters hold  (example wardrobe)
+  query: top size S under $30
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Casual Y2K** Pair the Y2K Baby Tee with your **Baggy straight-leg jeans, dark wash**. Layer with t…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: found this butterfly baby tee on depop for $18 and i'm obsessed 🦋 the fitted crop is *chef's kiss* early 2000s…
+  try 1: completed — fit card 186 chars
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Y2K Core** Pair the **Y2K Baby Tee — Butterfly Print** with **Baggy straight-leg jeans, dark wash*…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: scored this butterfly baby tee on depop for $18.00 and i'm absolutely obsessed 🦋 the early 2000s grip on me is…
+  try 2: completed — fit card 237 chars
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: # Outfit Suggestions  **Outfit 1: Y2K Core** Pair the Y2K Baby Tee — Butterfly Print with your **Baggy straigh…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: just copped this Y2K Baby Tee — Butterfly Print from depop for $18.00 and i'm OBSESSED??? the butterfly graphi…
+  try 3: completed — fit card 295 chars
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: # Outfit Ideas for Your Y2K Baby Tee  **Outfit 1: Classic Y2K Casual** Pair the **Y2K Baby Tee — Butterfly Pri…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: found this butterfly baby tee on depop for $18.00 and i'm obsessed 🦋 the early 2000s are calling and i'm answe…
+  try 4: completed — fit card 238 chars
+[1] parse query
+      in:  top size S under $30
+      out: {'description': 'top', 'size': 'S', 'max_price': 30.0}
+[2] search_listings (via MCP)
+      in:  {'description': 'top', 'size': 'S', 'max_price': 30.0}
+      out: 3 items: Y2K Baby Tee — Butterfly Print, Mesh Long-Sleeve Top — Black, Crochet Halter Top — Cream
+[3] select item
+      in:  3 results
+      out: id lst_002 Y2K Baby Tee — Butterfly Print
+[4] suggest_outfit
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print, wardrobe of 10 items
+      out: **Outfit 1: Classic Y2K** Y2K Baby Tee — Butterfly Print with Baggy straight-leg jeans, dark wash and Chunky w…
+[5] create_fit_card
+      in:  id lst_002 Y2K Baby Tee — Butterfly Print
+      out: found this butterfly baby tee on depop for $18.00 and it's the most y2k thing i've ever owned no lie 🦋 fits pe…
+  try 5: completed — fit card 307 chars
+
+Wrote results\run_2026-10-13_2355_before_c5.md
+10 model calls this session
+
+Commit this file. It's the evidence the test actually happened.
