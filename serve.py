@@ -33,9 +33,13 @@ then deploy it. A structured log you were handed teaches you nothing about
 what belongs in one — and the timing field is the one everybody skips.
 """
 
+import json
 import os
 import sys
 import threading
+import time
+from datetime import datetime, timezone
+from pathlib import Path
 
 # config first, and before anything that talks to the model: it loads your .env
 # and fixes the Windows console encoding for every module that imports it.
@@ -43,6 +47,7 @@ import config  # noqa: F401
 
 from flask import Flask, jsonify, request
 
+import generate
 from agent import run_agent
 from utils.data_loader import get_example_wardrobe
 
@@ -52,6 +57,9 @@ app = Flask(__name__)
 # characters. 300 leaves plenty of room and stops a pasted essay from being
 # split into hundreds of search keywords.
 MAX_QUERY_CHARS = 300
+
+# Capstone: one JSON line per /ask request. Override with AI201_LOG.
+LOG_PATH = Path(os.getenv("AI201_LOG", config.ROOT / "logs" / "runs.jsonl"))
 
 
 # ── one request at a time ─────────────────────────────────────────────────────
@@ -111,20 +119,70 @@ def ask():
                                                 out and you get the same
                                                 example wardrobe the CLI uses.
     Out:  the session dict from run_agent(), as JSON.
+
+    Capstone: every request, including a rejected or crashed one, appends one
+    JSON line to the run log (see _write_log). The work itself is in _ask().
     """
+    started = time.perf_counter()
+    rec = {
+        "ts": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
+        "input": request.get_data(as_text=True)[:200],  # replaced by the query once it parses
+        "http_status": None, "outcome": None, "error": None,
+        "n_results": None, "item_id": None, "fit_card_chars": 0,
+        "duration_ms": None, "model_calls": 0, "retries": 0,
+        "prompt_tokens": 0, "output_tokens": 0,
+        "fault": os.getenv("AI201_FAULT") or None,
+        "model": config.MODEL,
+    }
+    try:
+        body, status = _ask(rec)
+    except Exception as exc:  # noqa: BLE001 — anything _ask didn't expect still gets a record
+        body, status = {"error": f"{type(exc).__name__}: {exc}"}, 500
+
+    rec["http_status"] = status
+    rec["duration_ms"] = round((time.perf_counter() - started) * 1000)
+    rec["error"] = str(body["error"])[:300] if body.get("error") else None
+    if status == 400:
+        rec["outcome"] = "bad_input"
+    elif status != 200:
+        rec["outcome"] = "crash"
+    elif not rec["error"]:
+        rec["outcome"] = "ok"
+    elif not rec["n_results"]:
+        rec["outcome"] = "no_match"
+    else:
+        rec["outcome"] = "model_unavailable"
+    _write_log(rec)
+    return jsonify(body), status
+
+
+def _write_log(rec: dict) -> None:
+    """Append one record to the JSONL run log. A logging failure never fails the request."""
+    try:
+        LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+        # ponytail: plain append, no rotation; fine for a local run log, add rotation if it grows past a few MB
+        with LOG_PATH.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except OSError as exc:
+        print(f"  [serve] couldn't write run log: {exc}", file=sys.stderr, flush=True)
+
+
+def _ask(rec: dict) -> tuple[dict, int]:
+    """Validate, run the agent, and return (body, status). Fills rec as it goes."""
     payload = request.get_json(silent=True)
     # Capstone: every shape of bad body gets a 400 the caller can act on. Before
     # this, a JSON list or a non-string query crashed into a Flask 500.
     if not isinstance(payload, dict):
-        return jsonify({"error": "Send a JSON object with a 'query' field, e.g. "
+        return ({"error": "Send a JSON object with a 'query' field, e.g. "
                                  '{"query": "vintage graphic tee under $30"}'}), 400
     query = payload.get("query")
     if not isinstance(query, str) or not query.strip():
-        return jsonify({"error": "'query' must be a non-empty string, e.g. "
+        return ({"error": "'query' must be a non-empty string, e.g. "
                                  '{"query": "vintage graphic tee under $30"}'}), 400
     query = query.strip()
+    rec["input"] = query
     if len(query) > MAX_QUERY_CHARS:
-        return jsonify({"error": f"'query' is {len(query)} characters; keep it under "
+        return ({"error": f"'query' is {len(query)} characters; keep it under "
                                  f"{MAX_QUERY_CHARS}. Describe the item, its size and a price."}), 400
 
     wardrobe = payload.get("wardrobe")
@@ -152,17 +210,31 @@ def ask():
     failure = None
     session = None
     with _one_at_a_time:
+        # Counter deltas are taken inside the lock, so they belong to this
+        # request alone: generate.py's counters are module globals.
+        calls0, retries0, tokens0 = generate.call_count(), generate.retry_count(), generate.token_counts()
         try:
             session = run_agent(query, wardrobe)
         except Exception as exc:  # noqa: BLE001 — a 500 with a sentence beats a hang
             failure = f"{type(exc).__name__}: {exc}"
+        finally:
+            tokens1 = generate.token_counts()
+            rec["model_calls"] = generate.call_count() - calls0
+            rec["retries"] = generate.retry_count() - retries0
+            rec["prompt_tokens"] = tokens1["prompt"] - tokens0["prompt"]
+            rec["output_tokens"] = tokens1["output"] - tokens0["output"]
 
     # Outside the lock: building a response is not work the next caller should
     # be waiting on.
     if failure is not None:
-        return jsonify({"error": failure}), 500
+        return {"error": failure}, 500
 
-    return jsonify(session)
+    rec["n_results"] = len(session.get("search_results") or [])
+    rec["item_id"] = (session.get("selected_item") or {}).get("id")
+    rec["fit_card_chars"] = len(session.get("fit_card") or "")
+    return session, 200
+
+
 
 
 if __name__ == "__main__":

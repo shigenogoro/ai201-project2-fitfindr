@@ -624,3 +624,73 @@ Run path, structured logging and the cost measurement come with every shape and 
 - **Hosting and a UI.** I'm taking Path B (local with logs). No host, no web page, no change to the MCP setup or to `serve.py`'s one-request-at-a-time lock.
 
 *Stretch (declared before starting):* a latency breakdown of where one run's time goes. Optional, and only if the required parts are done first.
+
+**Running It**
+
+Path B, local with logs. `python serve.py` starts FitFindr as a local HTTP server on port 5000, and every `POST /ask` appends one record to `logs/runs.jsonl`. The exact command, the Python version, the pinned dependencies and the `.env` it needs are in [RUNNING.md](RUNNING.md), under "Capstone run path". There's no model file: the model is called over the network and the server uses about 98 MB (measured with `tasklist` while it was serving).
+
+I tested RUNNING.md on myself by cloning the repo into a fresh folder, making a new 3.12 venv, `pip install -r requirements.txt`, copying `.env.example` to `.env` with my key, `python test.py` (10 passed), and `python serve.py` on port 5055. One request through `bench.py` came back `200` with a fit card. It didn't fail the first time, which I expected it to. What I did find while measuring is that `localhost` on Windows costs about 2 s per request (it tries IPv6 first): a `400` that took 0 ms inside the server took 2.1 s at the client. So RUNNING.md and `bench.py` both use `127.0.0.1`.
+
+I didn't try a host. My system has no local model and would fit in 512 MB, so it isn't a memory problem; I took Path B because it's worth the same and lets me use `AI201_FAULT` to restart the server in different failure modes on my own machine.
+
+**Instrumentation**
+
+Every `/ask` request writes exactly one JSON line to `logs/runs.jsonl` (`serve.py::ask`, written by `serve.py::_write_log`), including requests that are rejected (`400`) or crash (`500`). A failure to write the log is printed and never fails the request. Fields:
+
+| Field | What it holds |
+|---|---|
+| `ts` | UTC time the request arrived |
+| `input` | the query; for a body that doesn't parse, the first 200 characters of the raw body |
+| `http_status` | what the caller got: 200, 400 or 500 |
+| `outcome` | `ok`, `no_match` (search found nothing), `model_unavailable` (an item was found but the model failed), `bad_input` (400), `crash` (500) |
+| `error` | the message the caller saw, if any |
+| `n_results`, `item_id` | how many listings search returned and which one was picked |
+| `fit_card_chars` | length of the fit card (0 = none) |
+| `duration_ms` | server-side time for the whole request |
+| `model_calls`, `retries` | attempts made to the model during this request, and how many were retries (from `generate.call_count()` / `generate.retry_count()`, taken inside the request lock so they belong to this request only) |
+| `prompt_tokens`, `output_tokens` | tokens Gemini reported for this request (`usage_metadata`) |
+| `fault` | the `AI201_FAULT` value active, or `null` for a real run |
+| `model` | model name from `config.MODEL` |
+
+The first 15 records, pasted from `logs/runs.jsonl`. The first ten are ten normal requests (five example queries, twice each, cache off). Then a query that matches nothing, two malformed bodies, one request with the server started under `AI201_FAULT=503:99` (the model failed on every attempt), and the run from the clean-clone test:
+
+```
+{"ts": "2026-11-16T06:28:18.174+00:00", "input": "vintage graphic tee under $30", "http_status": 200, "outcome": "ok", "error": null, "n_results": 10, "item_id": "lst_002", "fit_card_chars": 293, "duration_ms": 13421, "model_calls": 2, "retries": 0, "prompt_tokens": 521, "output_tokens": 209, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:28:33.640+00:00", "input": "vintage graphic tee under $30", "http_status": 200, "outcome": "ok", "error": null, "n_results": 10, "item_id": "lst_002", "fit_card_chars": 227, "duration_ms": 20576, "model_calls": 2, "retries": 0, "prompt_tokens": 518, "output_tokens": 191, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:28:56.298+00:00", "input": "90s track jacket in size M", "http_status": 200, "outcome": "ok", "error": null, "n_results": 3, "item_id": "lst_004", "fit_card_chars": 262, "duration_ms": 13649, "model_calls": 2, "retries": 0, "prompt_tokens": 490, "output_tokens": 170, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:29:12.032+00:00", "input": "90s track jacket in size M", "http_status": 200, "outcome": "ok", "error": null, "n_results": 3, "item_id": "lst_004", "fit_card_chars": 292, "duration_ms": 14142, "model_calls": 2, "retries": 0, "prompt_tokens": 500, "output_tokens": 193, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:29:28.250+00:00", "input": "silk slip dress in midi length under $40", "http_status": 200, "outcome": "ok", "error": null, "n_results": 2, "item_id": "lst_013", "fit_card_chars": 274, "duration_ms": 3717, "model_calls": 2, "retries": 0, "prompt_tokens": 509, "output_tokens": 180, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:29:34.039+00:00", "input": "silk slip dress in midi length under $40", "http_status": 200, "outcome": "ok", "error": null, "n_results": 2, "item_id": "lst_013", "fit_card_chars": 261, "duration_ms": 9049, "model_calls": 2, "retries": 0, "prompt_tokens": 522, "output_tokens": 191, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:29:45.141+00:00", "input": "platform sneakers size 8", "http_status": 200, "outcome": "ok", "error": null, "n_results": 1, "item_id": "lst_019", "fit_card_chars": 278, "duration_ms": 3956, "model_calls": 2, "retries": 0, "prompt_tokens": 536, "output_tokens": 213, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:29:51.175+00:00", "input": "platform sneakers size 8", "http_status": 200, "outcome": "ok", "error": null, "n_results": 1, "item_id": "lst_019", "fit_card_chars": 260, "duration_ms": 6514, "model_calls": 2, "retries": 0, "prompt_tokens": 553, "output_tokens": 228, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:29:59.751+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 311, "duration_ms": 6300, "model_calls": 2, "retries": 0, "prompt_tokens": 481, "output_tokens": 169, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:30:08.102+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 325, "duration_ms": 6624, "model_calls": 2, "retries": 0, "prompt_tokens": 488, "output_tokens": 178, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:30:22.874+00:00", "input": "designer ballgown size XXS under $5", "http_status": 200, "outcome": "no_match", "error": "No listings matched keywords 'designer ballgown', size XXS, under $5. Try raising the price limit, dropping the size, or using broader keywords.", "n_results": 0, "item_id": null, "fit_card_chars": 0, "duration_ms": 1472, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:30:26.824+00:00", "input": "[1, 2]", "http_status": 400, "outcome": "bad_input", "error": "Send a JSON object with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:30:28.901+00:00", "input": "{\"query\": 42}", "http_status": 400, "outcome": "bad_input", "error": "'query' must be a non-empty string, e.g. {\"query\": \"vintage graphic tee under $30\"}", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:30:44.985+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "model_unavailable", "error": "I found an item but can't write the outfit or fit card because the model couldn't be reached. The model kept failing after 5 attempts, so I stopped trying. Wait a minute and try again. Last error: 503 UNAVAILABLE. The model is overloaded. (injected by AI201_FAULT)", "n_results": 6, "item_id": "lst_007", "fit_card_chars": 0, "duration_ms": 20647, "model_calls": 5, "retries": 4, "prompt_tokens": 0, "output_tokens": 0, "fault": "503:99", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:34:13.757+00:00", "input": "platform sneakers size 8", "http_status": 200, "outcome": "ok", "error": null, "n_results": 1, "item_id": "lst_019", "fit_card_chars": 274, "duration_ms": 19643, "model_calls": 2, "retries": 0, "prompt_tokens": 521, "output_tokens": 195, "fault": null, "model": "gemini-3.5-flash-lite"}
+```
+
+The failed runs are lines 11–14. Line 14 is the one I most wanted on record: the item was found (`n_results: 6`, `item_id: lst_007`), five model attempts were made with four retries between them, and the user got a sentence, not a crash, after 20.6 s. Without the log that request would only show up as "no fit card".
+
+**What It Costs**
+
+*Measured:* I ran ten normal requests with the cache off (`AI201_CACHE=0`), the first ten lines above, and averaged the token counts the server logged. Those counts come from Gemini's own `usage_metadata` on each response, summed per request by `generate.py::_record_tokens`.
+
+| | Average per run (10 runs) | Range |
+|---|---|---|
+| Prompt tokens | 511.8 | 481–553 |
+| Output tokens | 192.2 | 169–228 |
+| Model calls | 2 | 2–2 |
+| Time (server side) | 9.8 s (median 7.8 s) | 3.7–20.6 s |
+
+*In money:* on my key this is the free tier, so what I actually paid was $0. At the paid rate for `gemini-3.5-flash-lite` ($0.30 per 1M input tokens, $2.50 per 1M output tokens; I took these from aggregator sites, not Google's own page):
+
+- input: 511.8 × $0.30 / 1,000,000 = $0.000154
+- output: 192.2 × $2.50 / 1,000,000 = $0.000481
+- **one run ≈ $0.00063**, about 6/100 of a cent. Output is three quarters of it.
+
+*For a hundred people a day,* each asking once: 100 × $0.00063 = **$0.063 a day**, about $1.90 a month (× 30). On the free tier the money is $0, and the limit is pace instead: 15 requests a minute is about 7 runs a minute, so 100 people a day is fine but 100 people in the same minute is not.
+
+*What this number doesn't include:* a no-match query costs nothing (no model calls, line 11), and a run with retries costs no more in tokens, because a failed attempt returns no tokens (line 14 shows 0). It costs time instead: 20.6 s for that one. Gemini bills "thinking" tokens as output, and `_record_tokens` reads only `candidates_token_count`, so I checked that I'm not missing any: on a direct call `thoughts_token_count` came back `None` and `total_token_count` equalled prompt + candidates (8 + 7 = 15). This model isn't thinking by default, so the count above is the whole bill.

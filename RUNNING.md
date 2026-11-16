@@ -4,6 +4,60 @@ Everything about how the starter works and how to use it.
 
 ---
 
+## Capstone run path (Path B — local with logs)
+
+FitFindr runs as a local HTTP server. One command starts it; every request
+writes one JSON line to `logs/runs.jsonl`.
+
+**Environment**
+
+- Python **3.12** (tested on 3.12.6; 3.11–3.13 supported, **not 3.14**)
+- Dependencies pinned in `requirements.txt` (`python-dotenv`, `google-genai`,
+  `mcp`, `flask`, `gunicorn`). Nothing else.
+- No local model files. The model is `gemini-3.5-flash-lite`, called over the
+  network; the process uses about 100 MB of memory.
+- A Gemini API key in `.env` (`GEMINI_API_KEY=...`), from aistudio.google.com.
+- Network access to `generativelanguage.googleapis.com`.
+
+**From a clean checkout (Windows PowerShell)**
+
+```powershell
+git clone <this repo> fitfindr
+cd fitfindr
+py -3.12 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+copy .env.example .env          # then paste your key into .env
+python test.py                  # must say "10 passed"
+$env:AI201_CACHE = "0"          # real model calls, no cached answers
+python serve.py                 # ← THE start command. Leave it running.
+```
+
+macOS / Linux: `python3.12 -m venv .venv`, `source .venv/bin/activate`,
+`cp .env.example .env`, and `AI201_CACHE=0 python serve.py`.
+
+**Send it requests** (second terminal, same venv):
+
+```powershell
+python bench.py 'vintage graphic tee under $30'           # one request
+python bench.py -n 10 'denim jacket under $50'            # ten in a row
+python bench.py --raw '[1, 2]' '{"query": 42}'            # malformed bodies -> 400
+curl.exe -X POST http://127.0.0.1:5000/ask -H "Content-Type: application/json" -d '{\"query\": \"denim jacket under $50\"}'
+```
+
+Use `127.0.0.1`, not `localhost`: on Windows `localhost` tries IPv6 first and
+adds about 2 s to every request before Flask even sees it.
+
+**Where the record goes:** `logs/runs.jsonl`, one JSON object per `/ask`
+request, including rejected and failed ones. Change the path with `AI201_LOG`.
+
+**Testing the bad path:** start the server with `AI201_FAULT` set, e.g.
+`$env:AI201_FAULT = "503:2"` (two fake 503s per model call, then the real one)
+or `"503:99"` (always fails). Unset it (`Remove-Item Env:AI201_FAULT`) and
+restart for normal runs. Every log record carries the `fault` that was active.
+
+---
+
 ## Before your first class
 
 Setup happens **before class**. The [environment setup page](../pages/ide_setup)
