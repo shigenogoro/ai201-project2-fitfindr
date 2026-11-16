@@ -276,8 +276,37 @@ def _get_client():
                 "Copy .env.example to .env and paste your key in, then try "
                 "again. `python test.py` will confirm it's working."
             )
-        _client = genai.Client(api_key=key)
+        from google.genai import types
+
+        _client = genai.Client(
+            api_key=key,
+            http_options=types.HttpOptions(timeout=int(config.MODEL_TIMEOUT_S * 1000)),
+        )
     return _client
+
+
+# ─── Fault injection (capstone) ──────────────────────────────────────────────
+# AI201_FAULT=<kind>:<n> makes the first n attempts of EVERY generate() call
+# fail on purpose, so the bad path can be tested on demand instead of waiting
+# for the service to have a bad night. Off unless the variable is set.
+#
+#   503:2      two fake 503s, then the real call   -> should recover
+#   503:99     fake 503 on every attempt            -> should give up cleanly
+#   timeout:1  one fake timeout, then the real call
+#   empty:1    one empty reply, then the real call
+#   key:1      a fake bad-key error                 -> should fail fast, no retry
+_FAULT_MESSAGES = {
+    "503": "503 UNAVAILABLE. The model is overloaded. (injected by AI201_FAULT)",
+    "timeout": "The read operation timed out (injected by AI201_FAULT)",
+    "key": "400 INVALID_ARGUMENT. API key not valid. (injected by AI201_FAULT)",
+}
+
+
+def _injected_fault(attempt: int) -> str | None:
+    kind, _, count = os.getenv("AI201_FAULT", "").strip().partition(":")
+    if not kind or attempt >= int(count or 1):
+        return None
+    return kind
 
 
 def _generate_claude(prompt: str, system: str | None) -> str:
@@ -363,9 +392,19 @@ def generate(
                 "config": call_config,
             }
 
-            response = client.models.generate_content(**kwargs)
-            _record_tokens(response)
-            text = (response.text or "").strip()
+            fault = _injected_fault(attempt)
+            if fault and fault != "empty":
+                raise Exception(_FAULT_MESSAGES.get(fault, f"unknown AI201_FAULT kind {fault!r}"))
+            if fault == "empty":
+                text = ""
+            else:
+                response = client.models.generate_content(**kwargs)
+                _record_tokens(response)
+                text = (response.text or "").strip()
+            if not text:
+                # An empty caption would sail through to the user as a blank
+                # fit card. Treat it as the transient failure it usually is.
+                raise Exception("empty reply from the model")
 
             if use_cache:
                 _cache_write(key, text)

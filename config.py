@@ -92,6 +92,11 @@ REQUESTS_PER_MINUTE = 15
 SESSION_REQUEST_BUDGET = 300
 MAX_RETRIES = 5
 
+# Capstone: how long one model call may take before it counts as failed (and
+# gets retried like a 503). A normal call here takes 1-4 s; 30 s is far past
+# that, so it only catches calls that are actually hung.
+MODEL_TIMEOUT_S = 30
+
 CACHE_DIR = ROOT / ".cache"
 
 
