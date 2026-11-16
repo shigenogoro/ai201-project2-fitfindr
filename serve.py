@@ -61,6 +61,20 @@ MAX_QUERY_CHARS = 300
 # Capstone: one JSON line per /ask request. Override with AI201_LOG.
 LOG_PATH = Path(os.getenv("AI201_LOG", config.ROOT / "logs" / "runs.jsonl"))
 
+# Capstone improvement (Milestone 6): build the Gemini client at start-up.
+# generate._get_client() imports google.genai lazily, so before this the FIRST
+# request after every start paid a one-time 2-7 s import on top of its own
+# work, which is what pushed the first give-up answer past 20 s (criterion C2).
+# Paying it here moves that cost to start-up, where no user is waiting.
+# No API call is made; a missing key still fails later, on the request, with
+# the message generate.py already gives.
+_t = time.perf_counter()
+try:
+    generate._get_client()
+    print(f"  [serve] model client ready in {time.perf_counter() - _t:.1f}s", file=sys.stderr, flush=True)
+except Exception as exc:  # noqa: BLE001 — warm-up is an optimisation, never a reason not to start
+    print(f"  [serve] model client not warmed up ({exc}); the first request will build it", file=sys.stderr, flush=True)
+
 
 # ── one request at a time ─────────────────────────────────────────────────────
 # Here's why this exists.

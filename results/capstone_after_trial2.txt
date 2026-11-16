@@ -1,0 +1,76 @@
+# Capstone trial 2 (after), started 2026-11-16 01:58:38
+
+$ AI201_FAULT=503:2 python bench.py 'denim jacket under $50' 'denim jacket under $50' 'denim jacket under $50' 'denim jacket under $50' 'denim jacket under $50'
+200    8.97s  'denim jacket under $50'                     #1  fit card 298 chars, item lst_007
+200    9.13s  'denim jacket under $50'                     #1  fit card 378 chars, item lst_007
+200   47.14s  'denim jacket under $50'                     #1  fit card 371 chars, item lst_007
+200    8.97s  'denim jacket under $50'                     #1  fit card 332 chars, item lst_007
+200    8.98s  'denim jacket under $50'                     #1  fit card 254 chars, item lst_007
+
+5 requests  status counts {200: 5}  median 8.98s  p90 9.13s  max 47.14s
+
+$ AI201_FAULT=503:99 python bench.py 'denim jacket under $50' 'denim jacket under $50' 'denim jacket under $50'
+200   16.08s  'denim jacket under $50'                     #1  error: I found an item but can't write the outfit or fit card because the model couldn't be reach
+200   16.17s  'denim jacket under $50'                     #1  error: I found an item but can't write the outfit or fit card because the model couldn't be reach
+200   16.37s  'denim jacket under $50'                     #1  error: I found an item but can't write the outfit or fit card because the model couldn't be reach
+
+3 requests  status counts {200: 3}  median 16.17s  p90 16.37s  max 16.37s
+
+$ AI201_FAULT= python bench.py --raw '' hello '[1, 2]' '{"query": 42}' '{"query": "   "}' '{"query": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'
+400    0.06s  ''                                           #1  error: Send a JSON object with a 'query' field, e.g. {"query": "vintage graphic tee under $30"}
+400    0.02s  'hello'                                      #1  error: Send a JSON object with a 'query' field, e.g. {"query": "vintage graphic tee under $30"}
+400    0.02s  '[1, 2]'                                     #1  error: Send a JSON object with a 'query' field, e.g. {"query": "vintage graphic tee under $30"}
+400    0.02s  '{"query": 42}'                              #1  error: 'query' must be a non-empty string, e.g. {"query": "vintage graphic tee under $30"}
+400    0.02s  '{"query": "   "}'                           #1  error: 'query' must be a non-empty string, e.g. {"query": "vintage graphic tee under $30"}
+400    0.02s  '{"query": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa'   #1  error: 'query' is 400 characters; keep it under 300. Describe the item, its size and a price.
+
+6 requests  status counts {400: 6}  median 0.02s  p90 0.02s  max 0.06s
+
+$ AI201_FAULT= python bench.py -n 2 'vintage graphic tee under $30' '90s track jacket in size M' 'silk slip dress in midi length under $40' 'platform sneakers size 8' 'denim jacket under $50'
+200    5.40s  'vintage graphic tee under $30'              #1  fit card 243 chars, item lst_002
+200   13.52s  'vintage graphic tee under $30'              #2  fit card 318 chars, item lst_002
+200    2.74s  '90s track jacket in size M'                 #1  fit card 278 chars, item lst_004
+200    3.52s  '90s track jacket in size M'                 #2  fit card 295 chars, item lst_004
+200   11.01s  'silk slip dress in midi length under $40'   #1  fit card 322 chars, item lst_013
+200    2.55s  'silk slip dress in midi length under $40'   #2  fit card 281 chars, item lst_013
+200    2.89s  'platform sneakers size 8'                   #1  fit card 286 chars, item lst_019
+200   21.03s  'platform sneakers size 8'                   #2  fit card 310 chars, item lst_019
+200    5.05s  'denim jacket under $50'                     #1  fit card 320 chars, item lst_007
+200   55.70s  'denim jacket under $50'                     #2  fit card 390 chars, item lst_007
+
+10 requests  status counts {200: 10}  median 5.23s  p90 21.03s  max 55.70s
+
+## Log lines added in this trial
+
+{"ts": "2026-11-16T06:58:40.863+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 298, "duration_ms": 8912, "model_calls": 6, "retries": 4, "prompt_tokens": 509, "output_tokens": 192, "fault": "503:2", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:58:49.790+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 378, "duration_ms": 9113, "model_calls": 6, "retries": 4, "prompt_tokens": 534, "output_tokens": 235, "fault": "503:2", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:58:58.927+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 371, "duration_ms": 47119, "model_calls": 6, "retries": 4, "prompt_tokens": 499, "output_tokens": 201, "fault": "503:2", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:59:46.049+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 332, "duration_ms": 8966, "model_calls": 6, "retries": 4, "prompt_tokens": 484, "output_tokens": 172, "fault": "503:2", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T06:59:55.019+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 254, "duration_ms": 8978, "model_calls": 6, "retries": 4, "prompt_tokens": 506, "output_tokens": 182, "fault": "503:2", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:06.746+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "model_unavailable", "error": "I found an item but can't write the outfit or fit card because the model couldn't be reached. The model kept failing after 5 attempts, so I stopped trying. Wait a minute and try again. Last error: 503 UNAVAILABLE. The model is overloaded. (injected by AI201_FAULT)", "n_results": 6, "item_id": "lst_007", "fit_card_chars": 0, "duration_ms": 16041, "model_calls": 5, "retries": 4, "prompt_tokens": 0, "output_tokens": 0, "fault": "503:99", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:22.803+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "model_unavailable", "error": "I found an item but can't write the outfit or fit card because the model couldn't be reached. The model kept failing after 5 attempts, so I stopped trying. Wait a minute and try again. Last error: 503 UNAVAILABLE. The model is overloaded. (injected by AI201_FAULT)", "n_results": 6, "item_id": "lst_007", "fit_card_chars": 0, "duration_ms": 16153, "model_calls": 5, "retries": 4, "prompt_tokens": 0, "output_tokens": 0, "fault": "503:99", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:38.962+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "model_unavailable", "error": "I found an item but can't write the outfit or fit card because the model couldn't be reached. The model kept failing after 5 attempts, so I stopped trying. Wait a minute and try again. Last error: 503 UNAVAILABLE. The model is overloaded. (injected by AI201_FAULT)", "n_results": 6, "item_id": "lst_007", "fit_card_chars": 0, "duration_ms": 16362, "model_calls": 5, "retries": 4, "prompt_tokens": 0, "output_tokens": 0, "fault": "503:99", "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:58.127+00:00", "input": "", "http_status": 400, "outcome": "bad_input", "error": "Send a JSON object with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:58.142+00:00", "input": "hello", "http_status": 400, "outcome": "bad_input", "error": "Send a JSON object with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:58.158+00:00", "input": "[1, 2]", "http_status": 400, "outcome": "bad_input", "error": "Send a JSON object with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:58.174+00:00", "input": "{\"query\": 42}", "http_status": 400, "outcome": "bad_input", "error": "'query' must be a non-empty string, e.g. {\"query\": \"vintage graphic tee under $30\"}", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:58.190+00:00", "input": "{\"query\": \"   \"}", "http_status": 400, "outcome": "bad_input", "error": "'query' must be a non-empty string, e.g. {\"query\": \"vintage graphic tee under $30\"}", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:58.206+00:00", "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "http_status": 400, "outcome": "bad_input", "error": "'query' is 400 characters; keep it under 300. Describe the item, its size and a price.", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:00:58.473+00:00", "input": "vintage graphic tee under $30", "http_status": 200, "outcome": "ok", "error": null, "n_results": 10, "item_id": "lst_002", "fit_card_chars": 243, "duration_ms": 5361, "model_calls": 2, "retries": 0, "prompt_tokens": 529, "output_tokens": 205, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:01:03.836+00:00", "input": "vintage graphic tee under $30", "http_status": 200, "outcome": "ok", "error": null, "n_results": 10, "item_id": "lst_002", "fit_card_chars": 318, "duration_ms": 13521, "model_calls": 2, "retries": 0, "prompt_tokens": 509, "output_tokens": 200, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:01:17.381+00:00", "input": "90s track jacket in size M", "http_status": 200, "outcome": "ok", "error": null, "n_results": 3, "item_id": "lst_004", "fit_card_chars": 278, "duration_ms": 2722, "model_calls": 2, "retries": 0, "prompt_tokens": 503, "output_tokens": 188, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:01:20.121+00:00", "input": "90s track jacket in size M", "http_status": 200, "outcome": "ok", "error": null, "n_results": 3, "item_id": "lst_004", "fit_card_chars": 295, "duration_ms": 3507, "model_calls": 2, "retries": 0, "prompt_tokens": 490, "output_tokens": 183, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:01:23.646+00:00", "input": "silk slip dress in midi length under $40", "http_status": 200, "outcome": "ok", "error": null, "n_results": 2, "item_id": "lst_013", "fit_card_chars": 322, "duration_ms": 10991, "model_calls": 2, "retries": 0, "prompt_tokens": 518, "output_tokens": 197, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:01:34.657+00:00", "input": "silk slip dress in midi length under $40", "http_status": 200, "outcome": "ok", "error": null, "n_results": 2, "item_id": "lst_013", "fit_card_chars": 281, "duration_ms": 2531, "model_calls": 2, "retries": 0, "prompt_tokens": 524, "output_tokens": 200, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:01:37.204+00:00", "input": "platform sneakers size 8", "http_status": 200, "outcome": "ok", "error": null, "n_results": 1, "item_id": "lst_019", "fit_card_chars": 286, "duration_ms": 2872, "model_calls": 2, "retries": 0, "prompt_tokens": 532, "output_tokens": 213, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:01:40.092+00:00", "input": "platform sneakers size 8", "http_status": 200, "outcome": "ok", "error": null, "n_results": 1, "item_id": "lst_019", "fit_card_chars": 310, "duration_ms": 21015, "model_calls": 2, "retries": 0, "prompt_tokens": 522, "output_tokens": 206, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:02:01.129+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 320, "duration_ms": 5033, "model_calls": 2, "retries": 0, "prompt_tokens": 522, "output_tokens": 201, "fault": null, "model": "gemini-3.5-flash-lite"}
+{"ts": "2026-11-16T07:02:06.187+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 390, "duration_ms": 55675, "model_calls": 3, "retries": 1, "prompt_tokens": 495, "output_tokens": 195, "fault": null, "model": "gemini-3.5-flash-lite"}
+
+## Counts
+
+C1: 4 of 5  [(298, 4, 8912), (378, 4, 9113), (371, 4, 47119), (332, 4, 8966), (254, 4, 8978)]
+C2: 3 of 3  [(200, 'model_unavailable', 16041), (200, 'model_unavailable', 16153), (200, 'model_unavailable', 16362)]
+C3: 6 of 6  [400, 400, 400, 400, 400, 400]
+C4: 24 of 24  24 new lines for 24 requests, 24 complete, statuses match: True
+C5: (10, 8, 713) of 10  [(243, 5361, 734), (318, 13521, 709), (278, 2722, 691), (295, 3507, 673), (322, 10991, 715), (281, 2531, 724), (286, 2872, 745), (310, 21015, 728), (320, 5033, 723), (390, 55675, 690)]

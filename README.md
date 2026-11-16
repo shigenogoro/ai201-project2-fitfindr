@@ -772,3 +772,61 @@ $ python bench.py -n 2 'vintage graphic tee under $30' '90s track jacket in size
 
 C5: (10, 9, 723) of 10  [(285, 5217, 729), (283, 4079, 783), (261, 3079, 647), (212, 2575, 634), (328, 3112, 771), (283, 3712, 787), (297, 2894, 748), (352, 40024, 719), (347, 3583, 721), (325, 2964, 690)]
 ```
+
+*Diagnosis of each miss*
+
+**C1 (MISSED, 4/5 in all three trials).** Every request recovered; the one that failed was always the third, at 45–48 s. Stage: `generate.py::_wait_for_slot`, the 15-requests-a-minute pacer that came with the starter. Mechanism: `generate()` appends to `_call_times` *before* my fault injection fires, so every fake 503 takes a pacing slot even though it never reaches Google. Under `503:2` one request is 2 model calls × 3 attempts = 6 slots, so requests 1 and 2 use 12 of the 15, and request 3's second call finds the minute full and sleeps until the oldest slot is 60 s old. I confirmed it rather than inferring it. I re-ran the first three C1 requests with the server's stderr captured (the trial script discards it), and the pacer's own message appears in request 3, after exactly 15 attempts:
+
+```
+11:   [retry] transient error: '503 UNAVAILABLE. The model is overloaded. (injected by AI201_FAULT)'. Waiting 2s (attempt 2 of 5).
+12:   [rate limit] 15 requests used this minute. Waiting 26s. This is normal.
+13:   [retry] transient error: '503 UNAVAILABLE. The model is overloaded. (injected by AI201_FAULT)'. Waiting 1s (attempt 1 of 5).
+```
+
+The real-world version of this isn't fake: a real 503 *does* reach Google, so with real failures every retry spends real per-minute quota too. The retry triples the slots a request needs exactly when the service is struggling. My 30 s target assumed retries cost only backoff time; they also cost pacing time, and on the free tier's 15 a minute that's the bigger of the two.
+
+**C2 (MISSED, 2/3 in trial 1).** Only the first request after the server started was over 20 s (22.8 s; the first requests of trials 2 and 3 were also the slowest, at 18.7 and 18.2 s, against 16.1–16.3 s for the rest). Stage: the first model call in a fresh server process. Mechanism: `generate.py::_get_client` imports `google.genai` and builds the client lazily, on the first call, so the first user after every start pays that one-time cost inside their request. I timed it in a fresh process three times: **5.7, 11.1 and 9.2 s** for the import and client (Windows, cold disk cache; it varies a lot). On top of a give-up path that is already 15 s of fixed backoff sleep (1 + 2 + 4 + 8 s), that leaves only about 4 s of headroom under 20 s, and a cold import can eat all of it.
+
+**C5 (MET, but at the limit).** Not a miss, but it has the same cause as C1: the slow request was the 8th of 10 in every trial (40.0, 39.4, 24.1 s). Two calls a request means request 8's second call is the 16th in the minute. The pacer is doing its job here (15 is the real free-tier limit), so this is the cost of the quota, not a bug. I set "9 of 10" thinking the one slow run in Milestone 3 was Gemini's variance; it was mostly this.
+
+*Pattern.* Two of the three slow-request problems (C1 and C5) are one problem: the pacer's 60-second window, which makes a fixed request in each sequence wait 25–35 s. It shows up at a fixed position, not at random, and that's how I found it. C2 is a separate, smaller problem (cold start). Nothing failed on correctness: in 72 requests every fit card that should have come back came back, every failure gave the right sentence, every bad body got a 400, and every request was logged.
+
+*One more thing the run log shows:* one real Gemini 503 ("This model is currently experiencing high demand") during the diagnosis re-run was retried and recovered (`[retry] transient error: "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently exp". Waiting 4s (attempt 3 of 5`), and another real transient error recovered in the after-run (below). Before this unit, both of those users would have got an apology.
+
+**The Improvement**
+
+*What I changed.* One change, in `serve.py`: the Gemini client is built when the server starts (`generate._get_client()` at module load, with its time printed), instead of inside the first request. No API call is made at start-up, and if it fails (no key) the server still starts and the first request reports the error the way it did before. Nothing else changed between the two runs: same criteria, same `capstone_trials.py`, same model, cache off.
+
+*Why this one.* It follows the C2 diagnosis: the miss was a one-time import cost landing on the first user's request. I didn't pick the C1 fix (stop fake attempts from taking pacing slots) because it changes only what my test switch costs, not anything a real user experiences. With real 503s the slots are really spent. Under the server's start-up message the cost moved where I wanted it: `[serve] model client ready in 5.7s` is printed before the server accepts requests.
+
+*Run log, before* (from `results/capstone_before_*`, same as above):
+
+| Criterion | Target (per trial) | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| C1. Injected 503×2 per call is recovered: fit card, `retries`=4, under 30 s | 5 of 5 | 4/5 | 4/5 | 4/5 | MISSED |
+| C2. Model never answers: 200, "couldn't be reached", no card, `model_unavailable`, under 20 s | 3 of 3 | 2/3 | 3/3 | 3/3 | MISSED |
+| C3. Six malformed bodies get 400, none get 500 | 6 of 6 | 6/6 | 6/6 | 6/6 | MET |
+| C4. One complete log record per request, status matches the client | 24 of 24 | 24/24 | 24/24 | 24/24 | MET |
+| C5. Normal path: fit card 10/10, ≥9/10 under 15 s, avg tokens ≤ 1,000 | all three parts | 10/10, 9/10, 723 | 10/10, 9/10, 718 | 10/10, 9/10, 713 | MET |
+
+*Run log, after* (`python capstone_trials.py --label after`; raw output in `results/capstone_after_trial1.txt` to `..._trial3.txt`, counts in `results/capstone_after_summary.md`):
+
+| Criterion | Target (per trial) | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| C1. Injected 503×2 per call is recovered: fit card, `retries`=4, under 30 s | 5 of 5 | 4/5 | 4/5 | 4/5 | MISSED |
+| C2. Model never answers: 200, "couldn't be reached", no card, `model_unavailable`, under 20 s | 3 of 3 | 3/3 | 3/3 | 3/3 | MET |
+| C3. Six malformed bodies get 400, none get 500 | 6 of 6 | 6/6 | 6/6 | 6/6 | MET |
+| C4. One complete log record per request, status matches the client | 24 of 24 | 24/24 | 24/24 | 24/24 | MET |
+| C5. Normal path: fit card 10/10, ≥9/10 under 15 s, avg tokens ≤ 1,000 | all three parts | 10/10, 9/10, 716 | 10/10, **8/10**, 713 | 10/10, 9/10, 744 | MISSED |
+
+*Did it help?* On the criterion it was aimed at, yes: C2 went from MISSED to MET. The first give-up answer after a start now takes 16.7, 16.0 and 18.2 s (before: 22.8, 18.7, 18.2), and all nine C2 requests were under 20 s. Honestly, the margin is still thin. Trial 3's first request was 18.2 s both before and after, so the warm-up didn't remove every first-request cost (the first MCP search still spawns a fresh process). The 15 s of backoff sleep, which this change doesn't touch, is most of the time.
+
+C1 didn't move, as expected: the same request (the third) hit the pacer in every trial (42.8, 47.1, 47.2 s).
+
+C5 got worse, from MET to MISSED, but not because of this change. Trial 2 had two requests over 15 s. One was the 8th again (21.0 s, the pacer), and the other was the 10th, at 55.7 s. Its log record shows why:
+
+```
+07:02:06 denim jacket under $50         55675 calls 3 retries 1
+```
+
+No fault was set: that was a **real** transient error from Gemini, retried by this unit's code. The user still got a fit card (390 chars). Without the retry they would have got the "couldn't be reached" message. But the third call was over the minute's 15, so the pacer made it wait, and with the backoff on top the request took almost a minute. So the trade the after-run shows is real, though not caused by the warm-up: the retry turns a failure into a success, and on the free tier's 15 a minute it can turn a 3 s answer into a 56 s one. The same request in trial 2 before the change was 3.4 s with no error, so this is the service's bad moment, not a regression in my code. I can't prove that from one trial, but the log shows the retry and the cause.
