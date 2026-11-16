@@ -43,6 +43,7 @@ _session_calls = 0
 _cache_hits = 0
 _prompt_tokens = 0
 _output_tokens = 0
+_retries = 0
 _client = None
 _budget_warned = False
 
@@ -158,6 +159,11 @@ def call_count() -> int:
     return _session_calls
 
 
+def retry_count() -> int:
+    """How many times this session retried a failed call (429 or transient)."""
+    return _retries
+
+
 def token_counts() -> dict:
     """
     What this session actually spent, in tokens, as reported by the service.
@@ -243,6 +249,21 @@ def _retry_delay(exc: Exception, attempt: int) -> float:
     return min(65.0, max(2.0 ** attempt, hinted))
 
 
+# Errors that tend to go away if you wait: the service is overloaded, a proxy
+# dropped the connection, or the call ran out of time. Matched on the lowered
+# exception text because google-genai raises several classes for them.
+# Not here on purpose: a bad key or a model name that doesn't resolve. Waiting
+# won't fix those, so they still fail fast.
+_TRANSIENT_MARKERS = (
+    "500", "502", "503", "504", "unavailable", "overloaded", "internal",
+    "disconnected", "deadline", "timed out", "timeout", "empty reply",
+)
+
+
+def _is_transient(message: str) -> bool:
+    return any(marker in message for marker in _TRANSIENT_MARKERS)
+
+
 def _get_client():
     global _client
     if _client is None:
@@ -305,7 +326,7 @@ def generate(
     Every call in this course goes through here. If you need to change how the
     model is called, change it in this one place.
     """
-    global _session_calls, _cache_hits
+    global _session_calls, _cache_hits, _retries
 
     use_cache = cache and config.CACHE_ENABLED
     temperature = config.TEMPERATURE if temperature is None else temperature
@@ -358,19 +379,25 @@ def generate(
                 or "resource" in message and "exhaust" in message
                 or "rate" in message and "limit" in message
             )
-            if not rate_limited:
+            if not (rate_limited or _is_transient(message)):
                 raise ModelUnavailable(_explain(exc)) from exc
+            if attempt == config.MAX_RETRIES - 1:
+                break  # no point sleeping before giving up
+            _retries += 1
             backoff = _retry_delay(exc, attempt)
+            kind = "rate limit" if rate_limited else "transient error"
             print(
-                f"  [rate limit] service pushed back. Waiting {backoff:.0f}s "
-                f"(attempt {attempt + 1} of {config.MAX_RETRIES}). This is "
-                f"the limiter doing its job, not a bug.",
+                f"  [retry] {kind}: {str(exc)[:80]!r}. Waiting {backoff:.0f}s "
+                f"(attempt {attempt + 1} of {config.MAX_RETRIES}).",
                 file=sys.stderr,
                 flush=True,
             )
             time.sleep(backoff)
 
-    raise RuntimeError(
-        f"Still rate limited after {config.MAX_RETRIES} attempts. Wait a "
-        f"minute and try again — your key is fine.\nLast error: {last_error}"
+    # ModelUnavailable, not RuntimeError: agent.run_agent already catches this
+    # one and turns it into a sentence for the user instead of a crash.
+    raise ModelUnavailable(
+        f"The model kept failing after {config.MAX_RETRIES} attempts, so I "
+        f"stopped trying. Wait a minute and try again. Last error: "
+        f"{str(last_error)[:200]}"
     )
