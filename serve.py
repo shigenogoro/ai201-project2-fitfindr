@@ -48,6 +48,11 @@ from utils.data_loader import get_example_wardrobe
 
 app = Flask(__name__)
 
+# A real request ("vintage graphic tee under $30, size M") is under 60
+# characters. 300 leaves plenty of room and stops a pasted essay from being
+# split into hundreds of search keywords.
+MAX_QUERY_CHARS = 300
+
 
 # ── one request at a time ─────────────────────────────────────────────────────
 # Here's why this exists.
@@ -107,12 +112,20 @@ def ask():
                                                 example wardrobe the CLI uses.
     Out:  the session dict from run_agent(), as JSON.
     """
-    payload = request.get_json(silent=True) or {}
-    query = (payload.get("query") or "").strip()
-    if not query:
-        # 400 rather than a stack trace: the caller can act on this one.
-        return jsonify({"error": "Send JSON with a 'query' field, e.g. "
+    payload = request.get_json(silent=True)
+    # Capstone: every shape of bad body gets a 400 the caller can act on. Before
+    # this, a JSON list or a non-string query crashed into a Flask 500.
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Send a JSON object with a 'query' field, e.g. "
                                  '{"query": "vintage graphic tee under $30"}'}), 400
+    query = payload.get("query")
+    if not isinstance(query, str) or not query.strip():
+        return jsonify({"error": "'query' must be a non-empty string, e.g. "
+                                 '{"query": "vintage graphic tee under $30"}'}), 400
+    query = query.strip()
+    if len(query) > MAX_QUERY_CHARS:
+        return jsonify({"error": f"'query' is {len(query)} characters; keep it under "
+                                 f"{MAX_QUERY_CHARS}. Describe the item, its size and a price."}), 400
 
     wardrobe = payload.get("wardrobe")
     if not isinstance(wardrobe, dict):
