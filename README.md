@@ -694,3 +694,81 @@ The failed runs are lines 11–14. Line 14 is the one I most wanted on record: t
 *For a hundred people a day,* each asking once: 100 × $0.00063 = **$0.063 a day**, about $1.90 a month (× 30). On the free tier the money is $0, and the limit is pace instead: 15 requests a minute is about 7 runs a minute, so 100 people a day is fine but 100 people in the same minute is not.
 
 *What this number doesn't include:* a no-match query costs nothing (no model calls, line 11), and a run with retries costs no more in tokens, because a failed attempt returns no tokens (line 14 shows 0). It costs time instead: 20.6 s for that one. Gemini bills "thinking" tokens as output, and `_record_tokens` reads only `candidates_token_count`, so I checked that I'm not missing any: on a direct call `thoughts_token_count` came back `None` and `total_token_count` equalled prompt + candidates (8 + 7 = 15). This model isn't thinking by default, so the count above is the whole bill.
+
+**Run Log and Verdicts**
+
+Three trials of all five criteria from `criteria.md` ("Capstone criteria"), with nothing changed between them: `python capstone_trials.py --label before`. Each trial starts `serve.py` three times (under `AI201_FAULT=503:2`, under `503:99`, and with no fault), drives it with `bench.py`, and counts from the log lines that trial added. Raw output, including every log line, is in `results/capstone_before_trial1.txt`, `..._trial2.txt` and `..._trial3.txt`, with the counts in `results/capstone_before_summary.md`. Cache off, real Gemini (`gemini-3.5-flash-lite`), 72 requests in all.
+
+| Criterion | Target (per trial) | Run 1 | Run 2 | Run 3 | Verdict |
+|---|---|---|---|---|---|
+| C1. Injected 503×2 per call is recovered: fit card, `retries`=4, under 30 s | 5 of 5 | 4/5 | 4/5 | 4/5 | MISSED |
+| C2. Model never answers: 200, "couldn't be reached", no card, `model_unavailable`, under 20 s | 3 of 3 | 2/3 | 3/3 | 3/3 | MISSED |
+| C3. Six malformed bodies get 400, none get 500 | 6 of 6 | 6/6 | 6/6 | 6/6 | MET |
+| C4. One complete log record per request, status matches the client | 24 of 24 | 24/24 | 24/24 | 24/24 | MET |
+| C5. Normal path: fit card 10/10, ≥9/10 under 15 s, avg tokens ≤ 1,000 | all three parts | 10/10, 9/10, 723 | 10/10, 9/10, 718 | 10/10, 9/10, 713 | MET |
+
+*How each was read.* C1: every one of the 15 requests recovered and got a fit card with exactly `retries`=4, so the retry itself never failed. The miss is time: the **third** request of every trial took 45.1, 48.0 and 47.7 s. C2: every request got the right answer (200, the "couldn't be reached" sentence, no card, `model_unavailable`). The miss is time again, the **first** request of trial 1 at 22.8 s (the other eight were 16.1–18.7 s). The target has to hold in every trial, so 2/3 in one trial is MISSED. C5 met all three parts, but its 9/10 is exactly at the limit in every trial, and the one slow request is the **eighth** every time (40.0, 39.4, 24.1 s). The misses (and C5's near-miss) all sit at fixed positions in the sequence, not at random ones. That is the first thing I'll look at in the diagnosis.
+
+**Real output, one trial per criterion** (all from `results/capstone_before_trial1.txt`)
+
+*C1 — `bench.py` against `serve.py::ask` → `agent.py::run_agent` → `generate.py::generate` with `AI201_FAULT=503:2`:*
+
+```
+$ AI201_FAULT=503:2 python bench.py 'denim jacket under $50' (x5)
+200   14.95s  'denim jacket under $50'                     #1  fit card 313 chars, item lst_007
+200   11.17s  'denim jacket under $50'                     #1  fit card 343 chars, item lst_007
+200   45.11s  'denim jacket under $50'                     #1  fit card 351 chars, item lst_007
+200   10.06s  'denim jacket under $50'                     #1  fit card 359 chars, item lst_007
+200   12.62s  'denim jacket under $50'                     #1  fit card 311 chars, item lst_007
+
+{"ts": "2026-11-16T06:39:09.283+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "ok", "error": null, "n_results": 6, "item_id": "lst_007", "fit_card_chars": 351, "duration_ms": 45089, "model_calls": 6, "retries": 4, "prompt_tokens": 494, "output_tokens": 182, "fault": "503:2", "model": "gemini-3.5-flash-lite"}
+```
+
+*C2 — same path, `AI201_FAULT=503:99`; the sentence comes from `agent.py::run_agent`'s `ModelUnavailable` handler:*
+
+```
+$ AI201_FAULT=503:99 python bench.py 'denim jacket under $50' (x3)
+200   22.83s  'denim jacket under $50'                     #1  error: I found an item but can't write the outfit or fit card because the model couldn't be reach
+200   16.35s  'denim jacket under $50'                     #1  error: I found an item but can't write the outfit or fit card because the model couldn't be reach
+200   16.09s  'denim jacket under $50'                     #1  error: I found an item but can't write the outfit or fit card because the model couldn't be reach
+
+{"ts": "2026-11-16T06:40:18.453+00:00", "input": "denim jacket under $50", "http_status": 200, "outcome": "model_unavailable", "error": "I found an item but can't write the outfit or fit card because the model couldn't be reached. The model kept failing after 5 attempts, so I stopped trying. Wait a minute and try again. Last error: 503 UNAVAILABLE. The model is overloaded. (injected by AI201_FAULT)", "n_results": 6, "item_id": "lst_007", "fit_card_chars": 0, "duration_ms": 22755, "model_calls": 5, "retries": 4, "prompt_tokens": 0, "output_tokens": 0, "fault": "503:99", "model": "gemini-3.5-flash-lite"}
+```
+
+*C3 — `serve.py::_ask` input checks, no model involved:*
+
+```
+$ python bench.py --raw '' hello '[1, 2]' '{"query": 42}' '{"query": "   "}' '{"query": "aaaa...(400 chars)"}'
+400    0.05s  ''                                           #1  error: Send a JSON object with a 'query' field, e.g. {"query": "vintage graphic tee under $30"}
+400    0.01s  'hello'                                      #1  error: Send a JSON object with a 'query' field, e.g. {"query": "vintage graphic tee under $30"}
+400    0.00s  '[1, 2]'                                     #1  error: Send a JSON object with a 'query' field, e.g. {"query": "vintage graphic tee under $30"}
+400    0.01s  '{"query": 42}'                              #1  error: 'query' must be a non-empty string, e.g. {"query": "vintage graphic tee under $30"}
+400    0.02s  '{"query": "   "}'                           #1  error: 'query' must be a non-empty string, e.g. {"query": "vintage graphic tee under $30"}
+400    0.00s  '{"query": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaa'   #1  error: 'query' is 400 characters; keep it under 300. Describe the item, its size and a price.
+```
+
+*C4 — `serve.py::_write_log`; the count line is from `capstone_trials.py::score`, and one of the six `bad_input` records shows a rejected request is still logged:*
+
+```
+C4: 24 of 24  24 new lines for 24 requests, 24 complete, statuses match: True
+
+{"ts": "2026-11-16T06:41:14.901+00:00", "input": "", "http_status": 400, "outcome": "bad_input", "error": "Send a JSON object with a 'query' field, e.g. {\"query\": \"vintage graphic tee under $30\"}", "n_results": null, "item_id": null, "fit_card_chars": 0, "duration_ms": 0, "model_calls": 0, "retries": 0, "prompt_tokens": 0, "output_tokens": 0, "fault": null, "model": "gemini-3.5-flash-lite"}
+```
+
+*C5 — the normal path, no fault (`(fit_card_chars, duration_ms, tokens)` per request from `capstone_trials.py::score`):*
+
+```
+$ python bench.py -n 2 'vintage graphic tee under $30' '90s track jacket in size M' 'silk slip dress in midi length under $40' 'platform sneakers size 8' 'denim jacket under $50'
+200    5.26s  'vintage graphic tee under $30'              #1  fit card 285 chars, item lst_002
+200    4.08s  'vintage graphic tee under $30'              #2  fit card 283 chars, item lst_002
+200    3.08s  '90s track jacket in size M'                 #1  fit card 261 chars, item lst_004
+200    2.60s  '90s track jacket in size M'                 #2  fit card 212 chars, item lst_004
+200    3.13s  'silk slip dress in midi length under $40'   #1  fit card 328 chars, item lst_013
+200    3.73s  'silk slip dress in midi length under $40'   #2  fit card 283 chars, item lst_013
+200    2.91s  'platform sneakers size 8'                   #1  fit card 297 chars, item lst_019
+200   40.04s  'platform sneakers size 8'                   #2  fit card 352 chars, item lst_019
+200    3.61s  'denim jacket under $50'                     #1  fit card 347 chars, item lst_007
+200    2.98s  'denim jacket under $50'                     #2  fit card 325 chars, item lst_007
+
+C5: (10, 9, 723) of 10  [(285, 5217, 729), (283, 4079, 783), (261, 3079, 647), (212, 2575, 634), (328, 3112, 771), (283, 3712, 787), (297, 2894, 748), (352, 40024, 719), (347, 3583, 721), (325, 2964, 690)]
+```
