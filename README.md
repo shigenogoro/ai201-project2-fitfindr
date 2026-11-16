@@ -593,3 +593,34 @@ I could not get a clean `before` run on the default model, so I want this on rec
 ---
 
 📖 **How to run this project: [RUNNING.md](RUNNING.md)**
+
+---
+
+## Capstone
+
+**What This Extends**
+
+This extends FitFindr, my Unit 3–4 agent (parse the query → `search_listings` over MCP → `suggest_outfit` → `create_fit_card`). The agent already works when the model answers. What's new this unit is the model layer's behaviour when the model *doesn't* answer cleanly, plus a run path (`python serve.py`) and a structured log around every request.
+
+The reason for picking this one is in my own Unit 4 write-up: on the default model (`gemini-3.5-flash-lite`) 12 to 25 of 30 tries failed with `503 UNAVAILABLE` or "Server disconnected", and `generate.py::generate` only retried `429`. So the first transient error ended the run, and the user got an apology instead of a fit card.
+
+**The Shape**
+
+Shape B — harden against failure. Everything that's new lives in the model layer (`generate.py`) and the HTTP front door (`serve.py`):
+
+- Retry transient model errors (`500`/`502`/`503`/`504`, "unavailable", "overloaded", "Server disconnected", timeouts) with the same backoff `429` already gets. Errors that won't fix themselves (a bad key, a model name that doesn't resolve) still fail fast.
+- A per-call timeout, so a hung request becomes a retry instead of a hang.
+- An empty reply from the model counts as a failure and gets retried, so it can't reach the fit card as an empty string.
+- When retries run out, the agent returns its readable "model couldn't be reached" message, not a crash and not a `500`.
+- `POST /ask` rejects malformed input (no JSON, a missing or non-string `query`, an oversized one) with a `400`, never a `500`.
+- A fault-injection switch (`AI201_FAULT`, off unless set) so I can trigger each failure on purpose and test the bad path instead of waiting for Gemini to have a bad night.
+
+Run path, structured logging and the cost measurement come with every shape and are part of this too.
+
+*Out of scope, on purpose:*
+
+- **Search relevance.** `search_listings` still ranks by keyword overlap only. I know it's weak ("What's Still Broken" #2 from Unit 4), but changing it is shape C, not B.
+- **The Claude provider.** The `AI201_PROVIDER=claude` path from Unit 4 stays as it is. I'm not hardening it or using it for this unit's runs; all capstone runs use Gemini, the default.
+- **Hosting and a UI.** I'm taking Path B (local with logs). No host, no web page, no change to the MCP setup or to `serve.py`'s one-request-at-a-time lock.
+
+*Stretch (declared before starting):* a latency breakdown of where one run's time goes. Optional, and only if the required parts are done first.
