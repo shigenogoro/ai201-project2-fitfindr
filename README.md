@@ -695,6 +695,8 @@ The failed runs are lines 11–14. Line 14 is the one I most wanted on record: t
 
 *What this number doesn't include:* a no-match query costs nothing (no model calls, line 11), and a run with retries costs no more in tokens, because a failed attempt returns no tokens (line 14 shows 0). It costs time instead: 20.6 s for that one. Gemini bills "thinking" tokens as output, and `_record_tokens` reads only `candidates_token_count`, so I checked that I'm not missing any: on a direct call `thoughts_token_count` came back `None` and `total_token_count` equalled prompt + candidates (8 + 7 = 15). This model isn't thinking by default, so the count above is the whole bill.
 
+*Checked against the test runs.* The 60 normal-path requests in the six trials (C5, before and after) average 519.2 prompt + 201.8 output = 721 tokens (range 634–927), which is **$0.00066 a run**. That's within 5% of the ten-run number above, so I'm keeping $0.00063 to $0.00066 as the per-run cost and **about $0.07 a day for 100 people** (100 × $0.00066 = $0.066). The time cost is less tidy: the median request took 3.5 s, but 7 of those 60 took over 15 s, almost all because of the free tier's 15-a-minute pacing (see the diagnosis below).
+
 **Run Log and Verdicts**
 
 Three trials of all five criteria from `criteria.md` ("Capstone criteria"), with nothing changed between them: `python capstone_trials.py --label before`. Each trial starts `serve.py` three times (under `AI201_FAULT=503:2`, under `503:99`, and with no fault), drives it with `bench.py`, and counts from the log lines that trial added. Raw output, including every log line, is in `results/capstone_before_trial1.txt`, `..._trial2.txt` and `..._trial3.txt`, with the counts in `results/capstone_before_summary.md`. Cache off, real Gemini (`gemini-3.5-flash-lite`), 72 requests in all.
@@ -830,3 +832,38 @@ C5 got worse, from MET to MISSED, but not because of this change. Trial 2 had tw
 ```
 
 No fault was set: that was a **real** transient error from Gemini, retried by this unit's code. The user still got a fit card (390 chars). Without the retry they would have got the "couldn't be reached" message. But the third call was over the minute's 15, so the pacer made it wait, and with the backoff on top the request took almost a minute. So the trade the after-run shows is real, though not caused by the warm-up: the retry turns a failure into a success, and on the free tier's 15 a minute it can turn a 3 s answer into a 56 s one. The same request in trial 2 before the change was 3.4 s with no error, so this is the service's bad moment, not a regression in my code. I can't prove that from one trial, but the log shows the retry and the cause.
+
+**What's Still Broken**
+
+After the improvement, two criteria are still MISSED (C1 and C5), and one I met has a thin margin (C2).
+
+- **C1, recovery under 30 s (missed in every trial).** The retry works, but the pacer makes the third request wait. What I'd do: two things, in this order. First, record a pacing slot only when an attempt actually goes to the network, so injected faults stop spending quota they don't use. That makes C1 measure my retry rather than my test switch. Second, the real problem behind it: give each request a *time budget* (say 25 s) that the retries and the pacer share, so that when the minute is full the agent fails fast with the "couldn't be reached" sentence instead of sleeping 30 s first. Why I stopped: I had one improvement to make, and I spent it on C2 because that one changes what a real user sees. The first fix would only have made my test cheaper. The second needs a new design decision: is a fast "try again" better than a slow fit card? I'd want a criterion for that before building it.
+- **C5, normal path (missed in after-trial 2: 8/10 under 15 s).** Both slow requests were the pacer: one at the usual 8th position, and one where a real Gemini error was retried and the extra call spilled over the 15-a-minute limit (55.7 s). What I'd do: the same time budget as C1. It's one problem with two symptoms. Raising `REQUESTS_PER_MINUTE` is not the fix: 15 is the real free-tier limit, and going over it just moves the wait to Google's 429. Why I stopped: same reason. And honestly, on this tier a run of ten requests in about a minute will always hit the limit once. A paid key (higher per-minute limit) would make this criterion about Gemini again, not the pacer.
+- **C2, give-up under 20 s (met, thin margin).** The first give-up answer after a start is still 18.2 s in one trial; 15 s of it is the fixed backoff (1 + 2 + 4 + 8 s). What I'd do: shorten the backoff for 5xx errors only, which don't come with a "retry in N s" hint the way a 429 does. Why I stopped: it's met, and changing the backoff also changes C1.
+- **Targets I'd tighten.** C3 (6/6 malformed → 400) and C4 (24/24 log lines) were met in every trial with no near-miss, so they're regression guards, not tests that taught me anything. I'd tighten C4 to cover a crash too (force a `500` and check it's logged), because none of my 144 requests crashed, so the `crash` outcome has never actually been written.
+
+- **The stretch I declared (a latency breakdown) isn't done.** I have the pieces: one total `duration_ms` per request, plus the timings I measured by hand during the diagnosis (5.7–11.1 s for the SDK import, 2–4.5 s per MCP search spawn, 15 s of backoff on the give-up path). But I never logged per-stage times, so I can't claim a measured breakdown of one run. I'd add `search_ms` and `model_ms` fields to the log record.
+
+*What I'd do first with another unit:* the per-request time budget, shared by retries and the pacer. Two of my three time problems (C1 and C5) are that one mechanism, and it's the only thing between "the retry saved this request" and "the retry made this user wait a minute".
+
+**How I Used AI**
+
+I used Claude (in Claude Code) for most of the work this unit. I made the decisions and did the commits; Claude wrote the code and the drafts. Three moments where it mattered:
+
+**Moment 1 — the criteria.**
+
+- *What I asked for:* to write `criteria.md` for me, after it told me the brief says not to have a model write them and offered to only review mine instead.
+- *What came back:* five criteria, four of them about the extension, with reasons tied to my Milestone 3 numbers (C2's 20 s is the slowest successful run I measured, C5's 15 s is about twice the median). It said up front that two of them (C2 and C5) were likely to miss, and that it hadn't loosened them because of that.
+- *What I changed:* very little, and that's the honest part. On re-reading, it caught its own error (C4 said "16 fields" when the log has 15), and it was fixed before the commit. The cost of this choice shows in What's Still Broken: C3 and C4 turned out to be safe criteria that couldn't really fail. If I'd written them myself I might have caught that. I didn't change any targets after seeing results.
+
+**Moment 2 — the diagnosis.**
+
+- *What I asked for:* to diagnose the misses.
+- *What came back:* after the first run it guessed it was the pacer, but it said it would test that before writing any diagnosis. It re-ran the first three C1 requests with the server's stderr captured, because `capstone_trials.py` throws it away, and the pacer's own message showed up exactly where predicted (`[rate limit] 15 requests used this minute. Waiting 26s` in request 3). The same re-run happened to show a *real* Gemini 503 being retried successfully.
+- *What I changed:* I kept the improvement it recommended (warm the client at start-up, for C2) over the fix that would have made C1 pass. That fix stops fake attempts taking pacing slots, which would have turned C1 green without changing anything a real user sees. I'd rather report C1 as missed with the real cause.
+
+**Moment 3 — a broken edit.**
+
+- *What I asked for:* the M2 retry change in `generate.py`.
+- *What came back:* its first attempt used an inline Python script piped through the shell. It mangled the file, and `import generate` failed with `IndentationError` on line 1. (The same thing happened in Unit 3 with a shell-script edit.) It restored the file with `git checkout generate.py` and redid the change as targeted edits, then tested it against a fake client (two 503s then success, a bad key, retries exhausted) before running it against real Gemini.
+- *What I changed:* nothing in the code. What I took from it: an edit to the model layer gets the fake-client check before it gets a real call, and I'd do that check first next time too.
